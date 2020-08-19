@@ -1389,6 +1389,12 @@ static void virtio_fs_conn_destroy(struct fuse_mount *fm)
 	if (IS_ENABLED(CONFIG_FUSE_DAX))
 		fuse_dax_cancel_work(fc);
 
+	/* Stop dax worker. Soon evict_inodes() will be called which will
+	 * free all memory ranges belonging to all inodes.
+	 */
+	if (IS_ENABLED(CONFIG_FUSE_DAX))
+		fuse_dax_cancel_work(fc);
+
 	/* Stop forget queue. Soon destroy will be sent */
 	spin_lock(&fsvq->lock);
 	fsvq->connected = false;
