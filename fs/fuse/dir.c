@@ -286,6 +286,15 @@ static int fuse_dentry_revalidate(struct dentry *entry, unsigned int flags)
 
 		attr_version = fuse_get_attr_version(fm->fc);
 
+		forget = fuse_alloc_forget();
+		ret = -ENOMEM;
+		if (!forget) {
+			dput(parent);
+			goto out;
+		}
+
+		attr_version = fuse_get_attr_version(fm->fc);
+
 		fuse_lookup_init(fm->fc, &args, get_node_id(d_inode(parent)),
 				 &entry->d_name, &outarg, &bpf_arg.out);
 		ret = fuse_simple_request(fm, &args);
