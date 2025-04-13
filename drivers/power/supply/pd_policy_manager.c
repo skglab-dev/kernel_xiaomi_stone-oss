@@ -853,6 +853,11 @@ static int battery_sw_jeita(struct usbpd_pm *pdpm)
 
     } else
         pdpm->pps_temp_flag = 0;
+
+    // Thermal charge bypass
+    if (pdpm->bat_temp < 400) {
+        pdpm->therm_curr = jeita_curr;
+    }
     return min(pdpm->therm_curr, jeita_curr);
 }
 
