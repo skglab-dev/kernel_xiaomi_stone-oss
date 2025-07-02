@@ -1062,6 +1062,9 @@ KBUILD_CFLAGS += $(call cc-disable-warning, unused-function)
 # disable warning -Wunused-variable
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-variable)
 
+# disable warning -Wframe-larger-than
+KBUILD_CFLAGS += $(call cc-disable-warning, frame-larger-than)
+
 # disable -Wstrict-prototypes
 KBUILD_CFLAGS += $(call cc-option, -Wno-error=strict-prototypes)
 
@@ -1082,6 +1085,9 @@ KBUILD_CFLAGS += $(call cc-option, -Wno-error=unused-function)
 
 # disable -Wunused-variable
 KBUILD_CFLAGS += $(call cc-option, -Wno-error=unused-variable)
+
+# disable -Wframe-larger-than
+KBUILD_CFLAGS += $(call cc-option, -Wno-error=frame-larger-than)
 
 # disable "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
