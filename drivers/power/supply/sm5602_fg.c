@@ -372,8 +372,6 @@ static irqreturn_t fg_irq_thread(int irq, void *dev_id)
 
 	fg_status_changed(sm);
 
-	pr_info("fg_read_int = 0x%x\n", data_int);
-
 	return 0;
 }
 #endif
@@ -397,7 +395,6 @@ static int fg_read_soc(struct sm_fg_chip *sm)
 		sm->soc_decimal = ((data&0x00ff)*100)/256;
 #endif
 		if (data & 0x8000) {
-			pr_err("fg_read_soc data=%d\n",data);
 			soc *= -1;
 		}
 	}
@@ -416,7 +413,6 @@ static int fg_read_uisoc(struct sm_fg_chip *sm)
 		uisoc = 100;
 
 	if (old_uisoc != uisoc) {
-		pr_info("rsoc = %d, uisoc = %d\n", rsoc, uisoc);
 		old_uisoc = uisoc;
 	}
 
@@ -430,16 +426,12 @@ int fg_get_soc_decimal_rate(void)
 
 	if (sm2->dec_rate_len <= 0)
 		return 0;
-	pr_err("dec_rate_len = %d\n", sm2->dec_rate_len);
 	soc = fg_read_soc(sm2);
-	pr_err("soc = %d\n", soc);
 	for (i = 0; i < sm2->dec_rate_len; i += 2) {
 		if (soc < sm2->dec_rate_seq[i]) {
 			return sm2->dec_rate_seq[i - 1];
 		}
 	}
-
-	pr_err("fg_get_soc_decimal_rate, soc_decimal_rate = %d\n", sm2->dec_rate_seq[sm2->dec_rate_len - 1]);
 
 	return sm2->dec_rate_seq[sm2->dec_rate_len - 1];
 }
@@ -451,8 +443,6 @@ int fg_get_soc_decimal(void)
 		return 0;
 
 	fg_read_soc(sm2);
-	pr_err("fg_get_soc_decimal, soc_decimal = %d\n", sm2->soc_decimal);
-
 	return sm2->soc_decimal;
 }
 EXPORT_SYMBOL_GPL(fg_get_soc_decimal);
@@ -561,7 +551,6 @@ static void calculate_average_temperature(struct sm_fg_chip *sm)
 	/* continue if exceed time */
 	if (delta_time < 1) {
 #endif
-		goto skip_avg;
 	} else {
 		sm->temp_param.batt_temp_prev = sm->temp_param.batt_temp;
 		sm->temp_param.last_temp_change_time = last_change_time;
@@ -585,10 +574,6 @@ static void calculate_average_temperature(struct sm_fg_chip *sm)
 
 		sm->temp_param.batt_temp_avg = DIV_ROUND_CLOSEST(avg_temp, sm->temp_param.samples_num);
 	}
-
-skip_avg:
-	pr_devel("temp_now = %d, averaged_avg_temp = %d\n",
-			sm->temp_param.batt_temp, sm->temp_param.batt_temp_avg);
 }
 #endif
 
@@ -604,7 +589,6 @@ static int _calculate_battery_temp_ex(struct sm_fg_chip *sm, u16 uval)
 #endif
 
 	if ((uval >= 0x8001) && (uval <= 0x823B)) {
-		pr_info("sp_range uval = 0x%x\n",uval);
 		uval = 0x0000;
 	}
 
@@ -662,7 +646,6 @@ static int fg_read_temperature(struct sm_fg_chip *sm, enum sm_fg_temperature_typ
 			if (data & 0x8000)
 				temp *= -1;
 		}
-		pr_info("fg_read_temperature_in temp_in=%d\n", temp);
 		break;
 	case TEMPERATURE_EX:
 		ret = fg_read_word(sm, sm->regs[SM_FG_REG_TEMPERATURE_EX], &data);
@@ -674,10 +657,7 @@ static int fg_read_temperature(struct sm_fg_chip *sm, enum sm_fg_temperature_typ
 		}
 #ifdef ENABLE_INIT_DELAY_TEMP		
 		if ((sm->en_init_delay_temp == 1) && (data == 0x0)) {
-			temp = 25;	
-			pr_info("fg_read_temperature_ex temp_ex=%d (en_init_delay_temp = [%d])\n", temp, sm->en_init_delay_temp);
-		} else {
-			pr_info("fg_read_temperature_ex temp_ex=%d (en_init_delay_temp = [%d])\n", temp, sm->en_init_delay_temp);
+			temp = 25;
 		}
 #else
 #endif
@@ -896,7 +876,6 @@ static int fg_in_pro(struct i2c_client *client)
 	}
 
 	fg_read_word(sm, 0x93, &data);
-	pr_info("0x93 = 0x%x\n", data);
 
 	return 0;
 }
@@ -906,8 +885,6 @@ static int fg_in_pro(struct i2c_client *client)
 static int fg_reset(struct sm_fg_chip *sm)
 {
     int ret;
-
-	pr_info("Enter fg_reset\n");
 
     ret = fg_write_word(sm, sm->regs[SM_FG_REG_RESET], FG_SOFT_RESET);
 	if (ret < 0) {
@@ -986,7 +963,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 						if (data != ltim_value)
 						{
 							fg_write_word(sm, FG_REG_RS_1, ltim_value);
-							pr_info("%s: ltim_value value set 0x%x tem(%d) i(%d)\n", __func__, ltim_value, sm->batt_temp, sm->batt_curr);
 						}
 					}
 				}
@@ -1001,7 +977,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 						if (data != sm->rs_value[1])
 						{
 							fg_write_word(sm, FG_REG_RS_1, sm->rs_value[1]);
-							pr_info("%s: ltimfactor value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[1], sm->batt_temp);
 						}
 					}
 				}
@@ -1017,7 +992,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 					if (data != sm->rs_value[1])
 					{
 						fg_write_word(sm, FG_REG_RS_1, sm->rs_value[1]);
-						pr_info("%s: ltimfactor value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[1], sm->batt_temp);
 					}
 				}
 			}
@@ -1037,7 +1011,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 				{
 					fg_write_word(sm, FG_REG_RS_3, hminman_value);
 					fg_write_word(sm, FG_REG_RS_0, hminman_value+2);
-					pr_info("%s: hminman value set 0x%x tem(%d) i(%d)\n", __func__, hminman_value, sm->batt_temp, sm->batt_curr);
 				}
 			}
 		}
@@ -1053,7 +1026,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 				{
 					fg_write_word(sm, FG_REG_RS_3, sm->rs_value[3]);
 					fg_write_word(sm, FG_REG_RS_0, sm->rs_value[0]);
-					pr_info("%s: hminman value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[3], sm->batt_temp);
 				}
 			}
 #ifdef ENABLE_LTIM_ACT
@@ -1066,7 +1038,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 				if (data != sm->rs_value[1])
 				{
 					fg_write_word(sm, FG_REG_RS_1, sm->rs_value[1]);
-					pr_info("%s: ltimfactor value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[1], sm->batt_temp);
 				}
 			}
 #endif
@@ -1084,7 +1055,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 			{
 				fg_write_word(sm, FG_REG_RS_3, sm->rs_value[3]);
 				fg_write_word(sm, FG_REG_RS_0, sm->rs_value[0]);
-				pr_info("%s: hminman value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[3], sm->batt_temp);
 			}
 		}
 #ifdef ENABLE_LTIM_ACT
@@ -1097,7 +1067,6 @@ static void fg_tembase_zdscon(struct sm_fg_chip *sm)
 			if (data != sm->rs_value[1])
 			{
 				fg_write_word(sm, FG_REG_RS_1, sm->rs_value[1]);
-				pr_info("%s: ltimfactor value restore 0x%x -> 0x%x tem(%d)\n", __func__, data, sm->rs_value[1], sm->batt_temp);
 			}
 		}
 #endif
@@ -1111,9 +1080,6 @@ static void fg_vbatocv_check(struct sm_fg_chip *sm)
 {
 	int ret = 0;
 	u16 data = 0;	
-
-	pr_info("sm->batt_curr (%d), sm->is_charging (%d), sm->top_off (%d), sm->batt_soc (%d), sm->topoff_margin (%d)\n", 
-			sm->batt_curr, sm->is_charging, sm->top_off, sm->batt_soc, sm->topoff_margin);
 
 	ret = fg_read_word(sm, FG_REG_RS_0, &data);
 	if (ret < 0) {
@@ -1133,8 +1099,6 @@ static void fg_vbatocv_check(struct sm_fg_chip *sm)
 			sm->iocv_error_count ++;
 		}
 
-		pr_info("sm5602 FG iocv_error_count (%d)\n", sm->iocv_error_count);
-
 		if(sm->iocv_error_count > 5)
 			sm->iocv_error_count = 6;
 	}
@@ -1152,7 +1116,6 @@ static void fg_vbatocv_check(struct sm_fg_chip *sm)
 
 	if(sm->iocv_error_count > 5)
 	{
-		pr_info("p_v - v = (%d)\n", sm->p_batt_voltage - sm->batt_volt);
 		if(abs(sm->p_batt_voltage - sm->batt_volt)>15)
 		{
 			sm->iocv_error_count = 0;
@@ -1160,7 +1123,6 @@ static void fg_vbatocv_check(struct sm_fg_chip *sm)
 		else
 		{
 			fg_write_word(sm, FG_REG_RS_2, data);
-			pr_info("mode change to RS m mode 0x%x\n", data);
 		}
 	}
 	else
@@ -1174,18 +1136,14 @@ static void fg_vbatocv_check(struct sm_fg_chip *sm)
 				(sm->n_tem_poff - sm->n_tem_poff_offset)))
 			{
 				fg_write_word(sm, FG_REG_RS_2, data>>1);
-				pr_info("mode change to normal tem RS m mode 0x%x\n", data>>1);
 			}
 			else
 			{
 				fg_write_word(sm, FG_REG_RS_2, data);
-				pr_info("mode change to normal tem RS m mode 0x%x\n", data);
 			}
 		}
 		else
 		{
-			pr_info("mode change to RS a mode\n");
-
 			fg_write_word(sm, FG_REG_RS_2, sm->rs_value[2]);
 		}
 	}
@@ -1244,8 +1202,6 @@ static int fg_cal_carc (struct sm_fg_chip *sm)
 	if (ret < 0) {
 		pr_err("Failed to write CURR_IN_OFFSET, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CURR_IN_OFFSET [0x%x] = 0x%x\n", FG_REG_CURR_IN_OFFSET, temp_curr_offset);
 	}
 
 	n_curr_cal = (sm->curr_slope & 0xFF00)>>8;
@@ -1264,16 +1220,6 @@ static int fg_cal_carc (struct sm_fg_chip *sm)
 	}
 	p_curr_cal = p_curr_cal + (p_fg_delta_cal);
 	n_curr_cal = n_curr_cal + (n_fg_delta_cal);
-
-	pr_info("<%d %d %d %d %d %d %d %d %d %d>, temp_fg = %d ,p_curr_cal = 0x%x, n_curr_cal = 0x%x, "
-		"batt_temp = %d\n",	
-		sm->en_high_fg_temp_cal,
-		sm->high_fg_temp_p_cal_denom, sm->high_fg_temp_p_cal_fact, 
-		sm->high_fg_temp_n_cal_denom, sm->high_fg_temp_n_cal_fact,
-		sm->en_low_fg_temp_cal, 
-		sm->low_fg_temp_p_cal_denom, sm->low_fg_temp_p_cal_fact, 
-		sm->low_fg_temp_n_cal_denom, sm->low_fg_temp_n_cal_fact,
-		sm->batt_temp, p_curr_cal, n_curr_cal, sm->batt_temp);
 
 	//temp_gap = (sm->batt_temp/10) - sm->temp_std;
 	temp_gap = sm->batt_temp - sm->temp_std;	
@@ -1300,7 +1246,6 @@ static int fg_cal_carc (struct sm_fg_chip *sm)
 		}
 		p_curr_cal = p_curr_cal + (p_delta_cal);
 		n_curr_cal = n_curr_cal + (p_delta_cal);
-		pr_info("%s: HCIC_ACT i_%d, p_curr_cal = 0x%x, n_curr_cal = 0x%x\n", __func__, sm->batt_curr, p_curr_cal, n_curr_cal);
 	}
 #endif
 
@@ -1310,19 +1255,7 @@ static int fg_cal_carc (struct sm_fg_chip *sm)
 	if (ret < 0) {
 		pr_err("Failed to write CURR_IN_SLOPE, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("write CURR_IN_SLOPE [0x%x] = 0x%x\n", FG_REG_CURR_IN_SLOPE, curr_cal);
 	}
-
-	pr_info("<%d %d %d %d %d %d %d %d %d %d>, "
-		"p_curr_cal = 0x%x, n_curr_cal = 0x%x, curr_cal = 0x%x\n",	
-		sm->en_high_temp_cal,
-		sm->high_temp_p_cal_denom, sm->high_temp_p_cal_fact, 
-		sm->high_temp_n_cal_denom, sm->high_temp_n_cal_fact,
-		sm->en_low_temp_cal, 
-		sm->low_temp_p_cal_denom, sm->low_temp_p_cal_fact, 
-		sm->low_temp_n_cal_denom, sm->low_temp_n_cal_fact,
-		p_curr_cal, n_curr_cal, curr_cal);
 
 	ret |= fg_read_word(sm, 0x06, &data[0]);
 	ret |= fg_read_word(sm, 0x1E, &data[1]);
@@ -1337,9 +1270,7 @@ static int fg_cal_carc (struct sm_fg_chip *sm)
 	if (ret < 0) {
 		pr_err("could not read , ret = %d\n", ret);
 		return ret;
-	} else
-		pr_info("0x06=0x%x, 0x1E=0x%x, 0x28=0x%x, 0x80=0x%x, 0x83=0x%x, 0x84=0x%x, 0x86=0x%x, 0x87=0x%x, 0x93=0x%x, 0x9C=0x%x\n",
-			data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9]);
+	}
 
 	return 1;
 }
@@ -1503,7 +1434,6 @@ static int fg_get_property(struct power_supply *psy, enum power_supply_property 
 		if ((sm->p_report_soc < 100) && (val->intval > 99)) {
 			if ((abs((sm->batt_curr + sm->p_batt_current)/2) > (sm->top_off+sm->topoff_margin)) && (sm->is_charging)) {
 				val->intval = val->intval - WAIT_SOC_GAP;
-				pr_info("soc wait for full chg - %d %d %d %d %d\n",sm->p_batt_current, sm->batt_curr, sm->top_off, sm->topoff_margin, sm->is_charging);
 			}
 		}
 #endif
@@ -1518,8 +1448,7 @@ static int fg_get_property(struct power_supply *psy, enum power_supply_property 
 		if( sm->batt_soc >= FG_RECHARGE_CAPACITY && bq->vbus_good_status && ((bq->charger_status == 3)||(bq_recharge_flag == 1))) {
 			val->intval = 100;
 		}
-		pr_err("sm->batt_soc:%d,bq->vbus_good_status:%d,bq->charger_status:%d,bq_recharge_flag:%d\n",sm->batt_soc,bq->vbus_good_status,bq->charger_status,bq_recharge_flag);
-	
+
 		if(sm->batt_soc < FG_RECHARGE_CAPACITY || sm->batt_soc > FG_RECHARGE_CAPACITY_limit) {
 			bq_recharge_flag = 0;
 		}
@@ -1532,8 +1461,6 @@ static int fg_get_property(struct power_supply *psy, enum power_supply_property 
 			//Under 1%
 			if (val->intval == 0) {
 				vbat_mv = fg_read_volt(sm);
-				pr_info("vbat_mv: %d, is_charging: %d, shutdown_delay: %d",
-					vbat_mv, sm->is_charging, sm->shutdown_delay);
 				if (sm->is_charging && sm->shutdown_delay) {
 					sm->shutdown_delay = false;
 					val->intval = 1;
@@ -1553,8 +1480,6 @@ static int fg_get_property(struct power_supply *psy, enum power_supply_property 
 				sm->shutdown_delay = false;
 			}
 			if (last_shutdown_delay != sm->shutdown_delay) {
-				pr_info("last_shutdown_delay (%d), sm->shutdown_delay (%d)",
-					last_shutdown_delay, sm->shutdown_delay);
 				last_shutdown_delay = sm->shutdown_delay;
 				if (sm->batt_psy) {
 					power_supply_changed(sm->batt_psy);
@@ -1743,8 +1668,6 @@ static int fg_psy_register(struct sm_fg_chip *sm)
 	if (!sm->fg_psy) {
 		pr_err("Failed to register fg_psy\n");
 		return (-1);
-	} else {
-		pr_err("success register fg_psy:%s\n", fg_power_supply_desc.name);
 	}
 
 	return 0;
@@ -1774,9 +1697,6 @@ static int fg_dump_debug(struct sm_fg_chip *sm)
 
 	for (i = 0; i < ARRAY_SIZE(fg_dump_regs); i++) {
 		ret = fg_read_word(sm, fg_dump_regs[i], &val);
-		if (!ret)
-			pr_info("Reg[0x%02X] = 0x%02X\n",
-						fg_dump_regs[i], val);
 	}
 	return 0;
 }
@@ -1874,9 +1794,7 @@ static void calculate_average_current(struct sm_fg_chip *sm)
 	int iavg_ma = sm->param.batt_ma;
 
 	/* only continue if ibat has changed */
-	if (sm->param.batt_ma == sm->param.batt_ma_prev)
-		goto unchanged;
-	else
+	if (sm->param.batt_ma != sm->param.batt_ma_prev)
 		sm->param.batt_ma_prev = sm->param.batt_ma;
 
 	sm->param.batt_ma_avg_samples[sm->param.samples_index] = iavg_ma;
@@ -1890,15 +1808,10 @@ static void calculate_average_current(struct sm_fg_chip *sm)
 		iavg_ma = 0;
 		/* maintain a AVG_SAMPLES sample average of ibat */
 		for (i = 0; i < sm->param.samples_num; i++) {
-			pr_debug("iavg_samples_ma[%d] = %d\n", i, sm->param.batt_ma_avg_samples[i]);
 			iavg_ma += sm->param.batt_ma_avg_samples[i];
 		}
 		sm->param.batt_ma_avg = DIV_ROUND_CLOSEST(iavg_ma, sm->param.samples_num);
 	}
-
-unchanged:
-	pr_info("current_now_ma = %d, averaged_iavg_ma = %d\n",
-			sm->param.batt_ma, sm->param.batt_ma_avg);
 }
 
 #define LOW_TBAT_THRESHOLD			15//Degree
@@ -1951,10 +1864,6 @@ static void fg_soc_smooth_tracking(struct sm_fg_chip *sm)
 
 	soc_changed = min(1, delta_time);
 	soc_changed = soc_changed *10; //SOC Changed rate 0.x~1.0%
-
-	pr_info("soc:%d, last_soc:%d, raw_soc:%d, update_now:%d, batt_ma:%d, time_since_last_change_sec:%d, soc_changed:%d, sm->charge_full:%d\n",
-			sm->param.batt_soc, last_batt_soc, sm->param.batt_raw_soc, sm->param.update_now,
-			sm->param.batt_ma, time_since_last_change_sec,soc_changed, sm->charge_full);
 
 	if (last_batt_soc >= 0) {
 		if (last_batt_soc != FULL_SOC && sm->param.batt_raw_soc >= FORCE_TO_FULL_SOC && sm->charge_full)
@@ -2030,10 +1939,7 @@ static void fg_refresh_status(struct sm_fg_chip *sm)
 
 	fg_read_status(sm);
 
-	if (!last_batt_inserted && sm->batt_present) {/* battery inserted */
-		pr_info("Battery inserted\n");
-	} else if (last_batt_inserted && !sm->batt_present) {/* battery removed */
-		pr_info("Battery removed\n");
+	if (last_batt_inserted && !sm->batt_present) {/* battery removed */
 		sm->batt_soc	= -ENODATA;
 		sm->batt_fcc	= -ENODATA;
 		sm->batt_volt	= -ENODATA;
@@ -2072,9 +1978,6 @@ static void fg_refresh_status(struct sm_fg_chip *sm)
 		//	power_supply_changed(sm->fg_psy);
 		//}
 		
-		pr_info("RSOC:%d, Volt:%d, Current:%d, Temperature:%d, OCV:%d, RMC:%d\n",
-			sm->batt_soc, sm->batt_volt, sm->batt_curr, sm->batt_temp, sm->batt_ocv, sm->batt_rmc);
-			
 #ifdef SOC_SMOOTH_TRACKING		
 		/* Update battery information */
 		sm->param.batt_ma = sm->batt_curr;
@@ -2122,7 +2025,6 @@ static int fg_recharge(struct sm_fg_chip *sm) {
 		msleep(100);
 		bq25890_charger_start_charge(bq);
 	}
-	pr_err("bq->charger_status:%d,sm->batt_soc:%d,bq->vbus_good_status:%d,sm->batt_temp:%d,bq->charger_val:%d\n",bq->charger_status,sm->batt_soc,bq->vbus_good_status,sm->batt_temp,bq->charger_val);
 	return 0;
 }
 
@@ -2151,8 +2053,6 @@ static void fg_init_delay_temp_workfunc(struct work_struct *work)
 	struct sm_fg_chip *sm = container_of(work, struct sm_fg_chip,
 								init_delay_temp_work.work);
 	sm->en_init_delay_temp = 0;
-	
-	pr_info("Disable init delay temperatue work : en_init_delay_temp : [%x]\n", sm->en_init_delay_temp);
 }
 #endif
 
@@ -2181,12 +2081,8 @@ static bool fg_check_reg_init_need(struct i2c_client *client)
 			&& ((param_ver & BATTERY_PARAM_MASK) >= sm->battery_param_version)) {
 
 			if ((data & INIT_CHECK_MASK) == DISABLE_RE_INIT) {
-				pr_info("SM_FG_REG_FG_OP_STATUS : 0x%x , return FALSE NO init need\n", data);
 				return 0;
-			}
-			else
-			{
-				pr_info("SM_FG_REG_FG_OP_STATUS : 0x%x , return TRUE init need!!!!\n", data);
+			} else {
 				return 1;
 			}
 		}
@@ -2209,14 +2105,9 @@ static bool fg_check_reg_init_need(struct i2c_client *client)
 					}
 				}
 				// Step3. If Step1 was charging-on, turn on charger.
-				
-				pr_info("SM_FG_REG_FG_OP_STATUS : 0x%x , return TRUE init need because diff_ver SW reset!!!!\n", data);
 				return 1;
 
-			}
-			else
-			{
-				pr_info("SM_FG_REG_FG_OP_STATUS : 0x%x , return TRUE init need!!!!\n", data);
+			} else {
 				return 1;
 			}
 		}
@@ -2247,8 +2138,6 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 	if (ret < 0) {
 		pr_err("Failed to read FG_REG_END_V_IDX, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("iocv_status_read = addr : 0x%x , data : 0x%x\n", FG_REG_END_V_IDX, data);
 	}
 
 	if((data & 0x0010) == 0x0000)
@@ -2281,7 +2170,6 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 			pr_err("Failed to read 0x%x, ret = %d\n",i, ret);
 			return ret;
 		}
-		pr_info("iocv read = addr : 0x%x , data : 0x%x\n", i, v_ret);
 		
 		//ret = fg_read_word(sm, i+0x10, &i_ret);
 		ret = fg_write_word(sm, 0x8C, i+0x10);
@@ -2299,7 +2187,6 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 			pr_err("Failed to read 0x%x, ret = %d\n",i, ret);
 			return ret;
 		}
-		pr_info("ioci read = addr : 0x%x , data : 0x%x\n", i+0x10, i_ret);
 
 		if((i_ret&0x4000) == 0x4000)
 		{
@@ -2435,11 +2322,6 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 		i_offset = i_offset|0x0080;
 	}
     i_offset = i_offset | i_offset<<8;
-
-	pr_info("iocv_l_max=0x%x, iocv_l_min=0x%x, iocv_l_avg=0x%x, lb_v_set=0x%x, roop_max=%d \n",
-			v_max, v_min, lb_v_avg, lb_v_set, roop_max);
-	pr_info("ioci_l_max=0x%x, ioci_l_min=0x%x, ioci_l_avg=0x%x, lb_i_set=0x%x, i_offset=0x%x, sign_i_offset=%d\n",
-			i_max, i_min, lb_i_avg, lb_i_set, i_offset, sign_i_offset);
 
 	if(!only_lb)
 	{
@@ -2632,16 +2514,9 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 
 			}
 		}
-
-		pr_info("iocv_c_max=0x%x, iocv_c_min=0x%x, iocv_c_avg=0x%x, cb_v_set=0x%x, cb_last_index=%d\n",
-				v_max, v_min, cb_v_avg, cb_v_set, cb_last_index);
-		pr_info("ioci_c_max=0x%x, ioci_c_min=0x%x, ioci_c_avg=0x%x, cb_i_set=0x%x, i_offset=0x%x, sign_i_offset=%d\n",
-				i_max, i_min, cb_i_avg, cb_i_set, i_offset, sign_i_offset);
-
 	}
 
     /* final set */
-	pr_info("cb_i_set=%d, i_vset_margin=%d, only_lb=%d\n", cb_i_set, i_vset_margin, only_lb);
 	if (only_lb) 
 	{
 		ret = MAXVAL(lb_v_set, cb_i_n_v_max);
@@ -2658,22 +2533,14 @@ static int fg_calculate_iocv(struct sm_fg_chip *sm)
 	{
 		cb_v_set = ret;
 		ret = ret - (((cb_i_set * IOCV_I_SLOPE) + IOCV_I_OFFSET) / 1000);
-		pr_info("first boot vbat-soc adjust 1st_v=0x%x, 2nd_v=0x%x, all_i=0x%x\n", cb_v_set, ret, cb_i_set);
 	}
 #endif
 
-    pr_info("iocv ret=%d, table=%d \n",ret, sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1]);
-    if(ret > sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1])
-    {
-        pr_info("iocv ret change hex 0x%x -> 0x%x ret is big than table data\n",ret, sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1]);
-	    pr_info("iocv ret change dec %d -> %d ret is big than table data\n",ret, sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1]);
+    if(ret > sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1]) {
         ret = sm->battery_table[BATTERY_TABLE0][FG_TABLE_LEN-1];
-    }
-    else if(ret < sm->battery_table[BATTERY_TABLE0][0])
-    {
-        pr_info("iocv ret change 0x%x -> 0x%x \n", ret, (sm->battery_table[BATTERY_TABLE0][0] + 0x10));
+	} else if(ret < sm->battery_table[BATTERY_TABLE0][0]) {
         ret = sm->battery_table[BATTERY_TABLE0][0] + 0x10;
-    }
+	}
 
 	return ret;
 }
@@ -2687,7 +2554,6 @@ static bool fg_reg_init(struct i2c_client *client)
 #ifdef ENABLE_INSPECTION_TABLE	
 	int k, m = 0;
 #endif
-	pr_info("sm5602_fg_reg_init START!!\n");
 
 	/*Temperature/Batt Det -  control register set*/
 	ret = fg_read_word(sm, sm->regs[SM_FG_REG_CNTL], &data);
@@ -2707,8 +2573,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write CNTL, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CNTL = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_CNTL], data);
 	}
 
 	/* Init mark */
@@ -2839,16 +2703,12 @@ static bool fg_reg_init(struct i2c_client *client)
 		if (ret < 0) {
 			pr_err("Failed to write param_ctrl unlock, ret = %d\n", ret);
 			return ret;
-		} else {
-			pr_info("Param Unlock\n");
 		}
 		//msleep(3);
 		msleep(60);
 		ret = fg_read_word(sm, sm->regs[SM_FG_REG_FG_OP_STATUS], &data);
 		if (ret < 0){
 			pr_err("Failed to read FG_OP_STATUS, ret = %d\n", ret);	
-		} else {
-			pr_info(" FG_OP_STATUS = 0x%x\n", data);
 		}
 		cnt++;
 
@@ -2859,8 +2719,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write VIT PERIOD, ret = %d\n", ret);
 		return ret;
-	} else {
-			pr_info("Write VIT_PERIOD = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_VIT_PERIOD], sm->vit_period);
 	}
 
 	/* Aging ctrl write */
@@ -2868,8 +2726,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write FG_REG_AGING_CTRL, ret = %d\n", ret);
 		return ret;
-	} else {
-			pr_info("Write FG_REG_AGING_CTRL = 0x%x : 0x%x\n", FG_REG_AGING_CTRL, sm->aging_ctrl);
 	}
 
 	/* SOC Cycle ctrl write */
@@ -2877,8 +2733,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write FG_REG_SOC_CYCLE_CFG, ret = %d\n", ret);
 		return ret;
-	} else {
-			pr_info("Write FG_REG_SOC_CYCLE_CFG = 0x%x : 0x%x\n", FG_REG_SOC_CYCLE_CFG, sm->cycle_cfg);
 	}
 
 	/*RSNS write */
@@ -2886,8 +2740,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write SM_FG_REG_RSNS_SEL, ret = %d\n", ret);
 		return ret;
-	} else {
-			pr_info("Write SM_FG_REG_RSNS_SEL = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_RSNS_SEL], sm->batt_rsns);
 	}
 	
 	/* Battery_Table write */
@@ -2898,9 +2750,6 @@ static bool fg_reg_init(struct i2c_client *client)
 			if (ret < 0) {
 				pr_err("Failed to write Battery Table, ret = %d\n", ret);
 				return ret;
-			} else {
-				pr_info("TABLE write OK [%d][%d] = 0x%x : 0x%x\n",
-					i, j, (table_reg + j), sm->battery_table[i][j]);
 			}
 			msleep(10); //10mS delay
 		}
@@ -2932,22 +2781,13 @@ static bool fg_reg_init(struct i2c_client *client)
 			}			
 
 			/* 2. Compare Table Value */
-			if (sm->battery_table[i][j] == data) {
-				// 2-1. Table value is same as dtsi value 
-				pr_info("TABLE data verify OK [%d][%d] = 0x%x : 0x%x\n",
-					i, j, (table_reg + j), data);
-			} else {
+			if (sm->battery_table[i][j] != data) {
 				/* 3. Table value is not same as dtsi value */
 				for (k = 1; k <= I2C_ERROR_COUNT_MAX; k++) {
-					pr_info("TABLE write data ERROR!!!! rewrite [%d][%d] = 0x%x : 0x%x, count=%d\n",
-					i, j, (table_reg + j), sm->battery_table[i][j], k);
 					// 3-1. Rewrite Battery Table
 					ret = fg_write_word(sm, (table_reg + j), sm->battery_table[i][j]);
 					if (ret < 0) {
 						pr_err("Failed to write Battery Table, ret = %d\n", ret);
-					} else {
-						pr_info("TABLE write OK [%d][%d] = 0x%x : 0x%x\n",
-							i, j, (table_reg + j), sm->battery_table[i][j]);
 					}
 					msleep(15); //15mS delay
 
@@ -2969,11 +2809,9 @@ static bool fg_reg_init(struct i2c_client *client)
 						}
 					}
 					// 3-3 Recompare Battery Table with dtsi value
-					if (sm->battery_table[i][j] == data) {
-						pr_info("TABLE rewrite OK [%d][%d] = 0x%x : 0x%x, count=%d\n",
-						i, j, (table_reg + j), data, k);
+					if (sm->battery_table[i][j] == data)
 						break;
-					}
+					
 					// 3-4 Under I2C_ERROR_COUNT_MAX(5), re-try verify process.
 					if (k >= I2C_ERROR_COUNT_MAX) {
 						pr_err("rewrite %d times, Fail\n", I2C_ERROR_COUNT_MAX);
@@ -2990,9 +2828,6 @@ static bool fg_reg_init(struct i2c_client *client)
 		if (ret < 0) {
 			pr_err("Failed to write Battery Table, ret = %d\n", ret);
 			return ret;
-		} else {
-			pr_info("TABLE write OK [%d][%d] = 0x%x : 0x%x\n",
-				i, j, table_reg, sm->battery_table[i][j]);
 		}
 		msleep(10); //10mS delay
 	}
@@ -3022,22 +2857,13 @@ static bool fg_reg_init(struct i2c_client *client)
 			pr_err("Failed to read 0x8D, %d ret = %d\n", data, ret);
 		}			
 			/* 2. Compare Table Value */
-		if (sm->battery_table[i][j] == data) {
-			// 2-1. Table value is same as dtsi value 
-			pr_info("TABLE data verify OK [%d][%d] = 0x%x : 0x%x\n",
-				i, j, table_reg, data);
-		} else {
+		if (sm->battery_table[i][j] != data) {
 			/* 3. Table value is not same as dtsi value */
 			for (k = 1; k <= I2C_ERROR_COUNT_MAX; k++) {
-				pr_info("TABLE write data ERROR!!!! rewrite [%d][%d] = 0x%x : 0x%x, count=%d\n",
-				i, j, table_reg, sm->battery_table[i][j], k);
 				// 3-1. Rewrite Battery Table
 				ret = fg_write_word(sm, table_reg, sm->battery_table[i][j]);
 				if (ret < 0) {
 					pr_err("Failed to write Battery Table, ret = %d\n", ret);
-				} else {
-					pr_info("TABLE write OK [%d][%d] = 0x%x : 0x%x\n",
-						i, j, table_reg, sm->battery_table[i][j]);
 				}
 				msleep(15); //15mS delay
 
@@ -3059,11 +2885,9 @@ static bool fg_reg_init(struct i2c_client *client)
 					}
 				}
 				// 3-3 Recompare Battery Table with dtsi value
-				if (sm->battery_table[i][j] == data) {
-					pr_info("TABLE rewrite OK [%d][%d] = 0x%x : 0x%x, count=%d\n",
-					 i, j, table_reg, data, k);
+				if (sm->battery_table[i][j] == data)
 					break;
-				}
+				
 				// 3-4 Over I2C_ERROR_COUNT_MAX(5), stopped re-try verify process.
 				if (k >= I2C_ERROR_COUNT_MAX){
 					pr_err("rewrite %d times, Fail\n", I2C_ERROR_COUNT_MAX);
@@ -3077,8 +2901,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write RS, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("RS = 0x%x : 0x%x\n",FG_REG_RS, sm->rs);
 	}
 
 	/*  alpha write */
@@ -3086,8 +2908,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write FG_REG_ALPHA, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("ALPHA = 0x%x : 0x%x\n",FG_REG_ALPHA, sm->alpha);
 	}
 
 	/*  beta write */
@@ -3095,8 +2915,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write FG_REG_BETA, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("BETA = 0x%x : 0x%x\n",FG_REG_BETA, sm->beta);
 	}
 
 	/*  RS write */
@@ -3104,52 +2922,37 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write RS_0, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("RS = 0x%x : 0x%x\n",FG_REG_RS_0, sm->rs_value[0]);
 	}
 
 	ret = fg_write_word(sm, FG_REG_RS_1, sm->rs_value[1]);
 	if (ret < 0) {
 		pr_err("Failed to write RS_1, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("RS_1 = 0x%x : 0x%x\n", FG_REG_RS_1, sm->rs_value[1]);
 	}
 		
 	ret = fg_write_word(sm, FG_REG_RS_2, sm->rs_value[2]);
 	if (ret < 0) {
 		pr_err("Failed to write RS_2, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("RS_2 = 0x%x : 0x%x\n", FG_REG_RS_2, sm->rs_value[2]);
 	}
 
 	ret = fg_write_word(sm, FG_REG_RS_3, sm->rs_value[3]);
 	if (ret < 0) {
 		pr_err("Failed to write RS_3, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("RS_3 = 0x%x : 0x%x\n", FG_REG_RS_3, sm->rs_value[3]);
 	}
 
 	ret = fg_write_word(sm, sm->regs[SM_FG_REG_CURRENT_RATE], sm->mix_value);
 	if (ret < 0) {
 		pr_err("Failed to write CURRENT_RATE, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CURRENT_RATE = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_CURRENT_RATE], sm->mix_value);
 	}
-
-	pr_info("RS_0 = 0x%x, RS_1 = 0x%x, RS_2 = 0x%x, RS_3 = 0x%x, CURRENT_RATE = 0x%x\n",
-		sm->rs_value[0], sm->rs_value[1], sm->rs_value[2], sm->rs_value[3], sm->mix_value);
 
 	/* VOLT_CAL write*/
 	ret = fg_write_word(sm, FG_REG_VOLT_CAL, sm->volt_cal);
 	if (ret < 0) {
 		pr_err("Failed to write FG_REG_VOLT_CAL, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("FG_REG_VOLT_CAL = 0x%x : 0x%x\n", FG_REG_VOLT_CAL, sm->volt_cal);
 	}		
 
 	/* CAL write*/	
@@ -3157,15 +2960,12 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write CURR_IN_OFFSET, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CURR_IN_OFFSET = 0x%x : 0x%x\n", FG_REG_CURR_IN_OFFSET, sm->curr_offset);
-	}		
+	}
+			
 	ret = fg_write_word(sm, FG_REG_CURR_IN_SLOPE, sm->curr_slope);
 	if (ret < 0) {
 		pr_err("Failed to write CURR_IN_SLOPE, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CURR_IN_SLOPE = 0x%x : 0x%x\n", FG_REG_CURR_IN_SLOPE, sm->curr_slope);
 	}
 
 	/* BAT CAP write */
@@ -3173,8 +2973,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write BAT_CAP, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("BAT_CAP = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_BAT_CAP], sm->cap);
 	}
 
 	/* MISC write */
@@ -3182,8 +2980,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write REG_MISC, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("REG_MISC 0x%x : 0x%x\n", sm->regs[SM_FG_REG_MISC], sm->misc);
 	}
 
 	/* TOPOFF SOC */
@@ -3191,8 +2987,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write SM_FG_REG_TOPOFFSOC, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("SM_REG_TOPOFFSOC 0x%x : 0x%x\n", sm->regs[SM_FG_REG_TOPOFFSOC], sm->topoff_soc);
 	}
 	
 	/*INIT_last -  control register set*/
@@ -3209,8 +3003,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write CNTL, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("CNTL = 0x%x : 0x%x\n", sm->regs[SM_FG_REG_CNTL], data);
 	}
 
 	/* Parameter Version [COMMON(0~255) | BATTERY(0~255)] */
@@ -3235,9 +3027,7 @@ static bool fg_reg_init(struct i2c_client *client)
 		if (ret < 0) {
 			pr_err("Failed to write FG_REG_SWADDR, ret = %d\n", ret);
 			return ret;
-		}	
-
-		pr_info("write to T_EX_H_ALARM = 0x%x\n", data);
+		}
 	}
 
 	/* T EX H ALARM  */
@@ -3255,9 +3045,7 @@ static bool fg_reg_init(struct i2c_client *client)
 		if (ret < 0) {
 			pr_err("Failed to write FG_REG_SWADDR, ret = %d\n", ret);
 			return ret;
-		}	
-
-		pr_info("write to T_EX_L_ALARM = 0x%x\n", data);
+		}
 	}
 
 	if (sm->iocv_man_mode) {
@@ -3299,21 +3087,16 @@ static bool fg_reg_init(struct i2c_client *client)
 			if (ret < 0) {
 				pr_err("Failed to read 0x%x, ret = %d\n",0x8D, ret);
 				return ret;
-			} else {
-				pr_info("IOCV_MAN(tem_value) :  0x%x\n", tem_value);
 			}
 
-			if (value == tem_value) {
-				pr_info("value = 0x%x : 0x%x, count=%d\n",
-				value, tem_value, i);
+			if (value == tem_value)
 				break;
-			}
+			
 			// Over I2C_ERROR_COUNT_MAX(5), stopped re-try verify process.
 			if (i >= I2C_ERROR_COUNT_MAX) {
 				pr_err("rewrite %d times, Fail\n", I2C_ERROR_COUNT_MAX);
 			}
 		}
-		pr_info("IOCV_MAN : 0x%x\n", value);
 	}
 	
 	msleep(20);
@@ -3322,8 +3105,6 @@ static bool fg_reg_init(struct i2c_client *client)
 	if (ret < 0) {
 		pr_err("Failed to write param_ctrl lock, ret = %d\n", ret);
 		return ret;
-	} else {
-		pr_info("Param Lock\n");
 	}
 
 	msleep(160);
@@ -3389,32 +3170,27 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	BUG_ON(np == 0);
 #ifdef FG_ENABLE_IRQ
 	sm->gpio_int = of_get_named_gpio(np, "qcom,irq-gpio", 0);
-	pr_info("gpio_int=%d\n", sm->gpio_int);
 
-	if (!gpio_is_valid(sm->gpio_int)) {
-		pr_info("gpio_int is not valid\n");
+	if (!gpio_is_valid(sm->gpio_int))
 		sm->gpio_int = -EINVAL;
-	}
+	
 #endif
     /* EN TEMP EX/IN */
     if (of_property_read_bool(np, "sm,en_temp_ex"))
         sm->en_temp_ex = true;
 	else
 		sm->en_temp_ex = 0;
-    pr_info("Temperature EX enabled = %d\n", sm->en_temp_ex);
 
     if (of_property_read_bool(np, "sm,en_temp_in"))
         sm->en_temp_in = true;
 	else
 		sm->en_temp_in = 0;
-    pr_info("Temperature IN enabled = %d\n", sm->en_temp_in);
 
 	/* EN BATT DET  */
 	if (of_property_read_bool(np, "sm,en_batt_det"))
 		sm->en_batt_det = true;
 	else
 		sm->en_batt_det = 0;
-	pr_info("Batt Det enabled = %d\n", sm->en_batt_det);
 
     /* MISC */
     rc = of_property_read_u32(np, "sm,misc",
@@ -3429,7 +3205,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 		sm->iocv_man_mode = true;
 	else
 		sm->iocv_man_mode = 0;
-	pr_info("IOCV_MAN_MODE = %d\n", sm->iocv_man_mode);
 
     /* Aging */
     rc = of_property_read_u32(np, "sm,aging_ctrl",
@@ -3470,7 +3245,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->low_soc1 = -EINVAL;
 	}
-    pr_info("low_soc1 = %d\n", sm->low_soc1);
 
     rc = of_property_read_u32(np, "sm,low_soc2", 
 					&sm->low_soc2);
@@ -3478,7 +3252,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->low_soc2 = -EINVAL;	
 	}
-    pr_info("low_soc2 = %d\n", sm->low_soc2);
 
     /* V_L/H_ALARM */
     rc = of_property_read_u32(np, "sm,v_l_alarm", 
@@ -3487,7 +3260,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->v_l_alarm = -EINVAL;
 	}
-    pr_info("v_l_alarm = %d\n", sm->v_l_alarm);
 
     rc = of_property_read_u32(np, "sm,v_h_alarm", 
 					&sm->v_h_alarm);
@@ -3495,7 +3267,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->v_h_alarm = -EINVAL;
 	}
-    pr_info("v_h_alarm = %d\n", sm->v_h_alarm);
 
     /* T_IN_H/L_ALARM */
     rc = of_property_read_u32(np, "sm,t_l_alarm_in", 
@@ -3504,7 +3275,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->t_l_alarm_in = -EINVAL;	
 	}
-    pr_info("t_l_alarm_in = %d\n", sm->t_l_alarm_in);
 
     rc = of_property_read_u32(np, "sm,t_h_alarm_in", 
 					&sm->t_h_alarm_in);
@@ -3512,7 +3282,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->t_h_alarm_in = -EINVAL;
 	}
-    pr_info("t_h_alarm_in = %d\n", sm->t_h_alarm_in);
 
     /* T_EX_H/L_ALARM */
     rc = of_property_read_u32(np, "sm,t_l_alarm_ex", 
@@ -3521,7 +3290,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->t_l_alarm_ex = -EINVAL;
 	}
-    pr_info("t_l_alarm_ex = %d\n", sm->t_l_alarm_ex);
 
     rc = of_property_read_u32(np, "sm,t_h_alarm_ex", 
 					&sm->t_h_alarm_ex);
@@ -3529,7 +3297,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
 	{
         sm->t_h_alarm_ex = -EINVAL;
 	}
-    pr_info("t_h_alarm_ex = %d\n", sm->t_h_alarm_ex);
 
     /* Battery Table Number */
     rc = of_property_read_u32(np, "sm,battery_table_num",
@@ -3546,7 +3313,6 @@ static int fg_common_parse_dt(struct sm_fg_chip *sm)
     {
         sm->common_param_version = -EINVAL;
     }
-    pr_info("common_param_version = %d\n", sm->common_param_version);
 
 #ifdef SHUTDOWN_DELAY
 	/* Shutdown feature */
@@ -3642,10 +3408,8 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 
 	/* battery_params node*/
 	np = of_find_node_by_name(of_node_get(np), "battery_params");
-	if (np == NULL) {
-		pr_info("Cannot find child node \"battery_params\"\n");
+	if (np == NULL)
 		return -EINVAL;
-	}
 
 	/* battery_id*/
 	battery_id = get_battery_id(sm);
@@ -3653,9 +3417,7 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 
 	if (battery_id == UNKNOW_SUPPLIER){
 		battery_id = FIRST_SUPPLIER;
-		pr_info("Non-certified battery set battery id = %d\n", battery_id);
-	} else {
-		pr_info("battery id = %d\n", battery_id);
+		pr_debug("Non-certified battery set battery id = %d\n", battery_id);
 	}
 
 	/*  battery_table*/
@@ -3665,11 +3427,9 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 
 		ret = of_property_read_u32_array(np, prop_name, table, FG_TABLE_LEN);
 		if (ret < 0)
-			pr_info("Can get prop %s (%d)\n", prop_name, ret);
+			pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 		for (j = 0; j < FG_TABLE_LEN; j++) {
 			sm->battery_table[i][j] = table[j];
-			pr_info("%s = <table[%d][%d] 0x%x>\n",
-				prop_name, i, j, table[j]);
 		}
 	}
 
@@ -3678,14 +3438,10 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 		 "battery%d,%s%d", battery_id, "battery_table", i);
 	ret = of_property_read_u32_array(np, prop_name, table, FG_ADD_TABLE_LEN);
 	if (ret < 0)
-		pr_info("Can get prop %s (%d)\n", prop_name, ret);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	else {
-		for(j=0; j < FG_ADD_TABLE_LEN; j++)
-		{
+		for(j=0; j < FG_ADD_TABLE_LEN; j++) {
 			sm->battery_table[i][j] = table[j];
-			pr_info("%s = <table[%d][%d] 0x%x>\n",
-				prop_name, i, j, table[j]);
-		
 		}
 	}
 	
@@ -3693,22 +3449,19 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "rs");
 	ret = of_property_read_u32_array(np, prop_name, &sm->rs, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->rs);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
     /* alpha */
 	snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "alpha");
 	ret = of_property_read_u32_array(np, prop_name, &sm->alpha, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->alpha);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
     /* beta */
 	snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "beta");
 	ret = of_property_read_u32_array(np, prop_name, &sm->beta, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->beta);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
 	/* rs_value*/
 	for (i = 0; i < 4; i++) {
@@ -3717,12 +3470,10 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 			battery_id, "rs_value");
 		ret = of_property_read_u32_array(np, prop_name, rs_value, 4);
 		if (ret < 0)
-			pr_err("Can get prop %s (%d)\n", prop_name, ret);
+			pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 		sm->rs_value[i] = rs_value[i];
 	}
-	pr_info("%s = <0x%x 0x%x 0x%x 0x%x>\n",
-		prop_name, rs_value[0], rs_value[1], rs_value[2], rs_value[3]);
-
+	
 	/* vit_period*/
 	snprintf(prop_name,
 		PROPERTY_NAME_SIZE, "battery%d,%s",
@@ -3730,32 +3481,24 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	ret = of_property_read_u32_array(np,
 		prop_name, &sm->vit_period, 1);
 	if (ret < 0)
-		pr_info("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->vit_period);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
     /* battery_type*/
     snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "battery_type");
     ret = of_property_read_u32_array(np, prop_name, battery_type, 3);
     if (ret < 0)
-        pr_err("Can get prop %s (%d)\n", prop_name, ret);
+        pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
     sm->batt_v_max = battery_type[0];
     sm->min_cap = battery_type[1];
     sm->cap = battery_type[2];
-
-    pr_info("%s = <%d %d %d>\n", prop_name,
-        sm->batt_v_max, sm->min_cap, sm->cap);
 
 	/* tem poff level */
 	snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "tem_poff");
 	ret = of_property_read_u32_array(np, prop_name, set_temp_poff, 2);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	sm->n_tem_poff = set_temp_poff[0];
 	sm->n_tem_poff_offset = set_temp_poff[1];
-
-	pr_info("%s = <%d, %d>\n",
-		prop_name,
-		sm->n_tem_poff, sm->n_tem_poff_offset);
 
     /* max-voltage -mv*/
     snprintf(prop_name,
@@ -3770,30 +3513,23 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
     	PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "topoff_soc");
     ret = of_property_read_u32_array(np, prop_name, topoff_soc, 3);
     if (ret < 0)
-        pr_err("Can get prop %s (%d)\n", prop_name, ret);
+        pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
     sm->topoff_soc = topoff_soc[0];
     sm->top_off = topoff_soc[1];
 	sm->topoff_margin = topoff_soc[2];
-
-    pr_info("%s = <%d %d %d>\n", prop_name,
-        sm->topoff_soc, sm->top_off, sm->topoff_margin);
 
     // Mix
     snprintf(prop_name, 
     	PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "mix_value");
     ret = of_property_read_u32_array(np, prop_name, &sm->mix_value, 1);
     if (ret < 0)
-        pr_err("Can get prop %s (%d)\n", prop_name, ret);
-
-    pr_info("%s = <%d>\n", prop_name,
-        sm->mix_value);
+        pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
     /* VOLT CAL */
     snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "volt_cal");
     ret = of_property_read_u32_array(np, prop_name, &sm->volt_cal, 1);
     if (ret < 0)
-        pr_err("Can get prop %s (%d)\n", prop_name, ret);
-    pr_info("%s = <0x%x>\n", prop_name, sm->volt_cal);
+        pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
 	/* CURR OFFSET */
 	snprintf(prop_name,
@@ -3801,8 +3537,7 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	ret = of_property_read_u32_array(np,
 		prop_name, &sm->curr_offset, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->curr_offset);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
 	/* CURR SLOPE */
 	snprintf(prop_name,
@@ -3810,16 +3545,14 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	ret = of_property_read_u32_array(np,
 		prop_name, &sm->curr_slope, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->curr_slope);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
 	/* temp_std */
 	snprintf(prop_name, 
 		PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "temp_std");
 	ret = of_property_read_u32_array(np, prop_name, &sm->temp_std, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <%d>\n", prop_name, sm->temp_std);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 
 	/* temp_offset */
 	snprintf(prop_name, 
@@ -3833,18 +3566,13 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	sm->en_low_fg_temp_offset = temp_offset[3];
 	sm->low_fg_temp_offset_denom = temp_offset[4];
 	sm->low_fg_temp_offset_fact = temp_offset[5];
-	pr_info("%s = <%d, %d, %d, %d, %d, %d>\n", prop_name,
-		sm->en_high_fg_temp_offset, 
-		sm->high_fg_temp_offset_denom, sm->high_fg_temp_offset_fact,
-		sm->en_low_fg_temp_offset,
-		sm->low_fg_temp_offset_denom, sm->low_fg_temp_offset_fact);
 
 	/* temp_calc */
 	snprintf(prop_name, 
 		PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "temp_cal");
 	ret = of_property_read_u32_array(np, prop_name, temp_cal, 10);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	sm->en_high_fg_temp_cal = temp_cal[0];
 	sm->high_fg_temp_p_cal_denom = temp_cal[1];
 	sm->high_fg_temp_p_cal_fact = temp_cal[2];
@@ -3855,20 +3583,13 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	sm->low_fg_temp_p_cal_fact = temp_cal[7];
 	sm->low_fg_temp_n_cal_denom = temp_cal[8];
 	sm->low_fg_temp_n_cal_fact = temp_cal[9];
-	pr_info("%s = <%d, %d, %d, %d, %d, %d, %d, %d, %d, %d>\n", prop_name,
-		sm->en_high_fg_temp_cal, 
-		sm->high_fg_temp_p_cal_denom, sm->high_fg_temp_p_cal_fact,
-		sm->high_fg_temp_n_cal_denom, sm->high_fg_temp_n_cal_fact,
-		sm->en_low_fg_temp_cal,
-		sm->low_fg_temp_p_cal_denom, sm->low_fg_temp_p_cal_fact,
-		sm->low_fg_temp_n_cal_denom, sm->low_fg_temp_n_cal_fact);
 
 	/* ext_temp_calc */
 	snprintf(prop_name, 
 		PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "ext_temp_cal");
 	ret = of_property_read_u32_array(np, prop_name, ext_temp_cal, 10);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	sm->en_high_temp_cal = ext_temp_cal[0];
 	sm->high_temp_p_cal_denom = ext_temp_cal[1];
 	sm->high_temp_p_cal_fact = ext_temp_cal[2];
@@ -3879,13 +3600,6 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	sm->low_temp_p_cal_fact = ext_temp_cal[7];
 	sm->low_temp_n_cal_denom = ext_temp_cal[8];
 	sm->low_temp_n_cal_fact = ext_temp_cal[9];
-	pr_info("%s = <%d, %d, %d, %d, %d, %d, %d, %d, %d, %d>\n", prop_name,
-		sm->en_high_temp_cal, 
-		sm->high_temp_p_cal_denom, sm->high_temp_p_cal_fact,
-		sm->high_temp_n_cal_denom, sm->high_temp_n_cal_fact,
-		sm->en_low_temp_cal,
-		sm->low_temp_p_cal_denom, sm->low_temp_p_cal_fact,
-		sm->low_temp_n_cal_denom, sm->low_temp_n_cal_fact);
 
 	/* get battery_temp_table*/
 	 snprintf(prop_name, PROPERTY_NAME_SIZE,
@@ -3893,19 +3607,16 @@ static int fg_battery_parse_dt(struct sm_fg_chip *sm)
 	
 	 ret = of_property_read_u32_array(np, prop_name, battery_temp_table, FG_TEMP_TABLE_CNT_MAX);
 	 if (ret < 0)
-		 pr_err("Can get prop %s (%d)\n", prop_name, ret);
+		 pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	 for (i = 0; i < FG_TEMP_TABLE_CNT_MAX; i++) {
 		 sm->battery_temp_table[i] = battery_temp_table[i];
-		 pr_err("%s = <battery_temp_table[%d] 0x%x>\n",
-			 prop_name, i,	battery_temp_table[i]);
 	 }
 
     /* Battery Paramter */
 	snprintf(prop_name, PROPERTY_NAME_SIZE, "battery%d,%s", battery_id, "param_version");
 	ret = of_property_read_u32_array(np, prop_name, &sm->battery_param_version, 1);
 	if (ret < 0)
-		pr_err("Can get prop %s (%d)\n", prop_name, ret);
-	pr_info("%s = <0x%x>\n", prop_name, sm->battery_param_version);
+		pr_err("Cannot get prop %s (%d)\n", prop_name, ret);
 	
 	return 0;
 }
@@ -3914,7 +3625,6 @@ bool hal_fg_init(struct i2c_client *client)
 {
 	struct sm_fg_chip *sm = i2c_get_clientdata(client);
 
-	pr_info("sm5602 hal_fg_init...\n");
 	mutex_lock(&sm->data_lock);
 	if (client->dev.of_node) {
 		/* Load common data from DTS*/
@@ -3926,7 +3636,6 @@ bool hal_fg_init(struct i2c_client *client)
         return false;
 
 	mutex_unlock(&sm->data_lock);
-	pr_info("hal fg init OK\n");
 	return true;
 }
 
@@ -3938,7 +3647,6 @@ static int sm_fg_probe(struct i2c_client *client,
 	struct sm_fg_chip *sm;
 	u8 *regs;
 
-	pr_info("enter\n");
 	sm = devm_kzalloc(&client->dev, sizeof(*sm), GFP_KERNEL);
 
 	if (!sm)
@@ -4039,8 +3747,7 @@ static int sm_fg_probe(struct i2c_client *client,
 
 #if 0	
 	schedule_delayed_work(&sm->soc_monitor_work, msecs_to_jiffies(MONITOR_SOC_WAIT_MS));
-#endif	
-	pr_info("sm fuel gauge probe successfully, %s\n",device2str[sm->chip]);
+#endif
 
 	return 0;
 #ifdef FG_ENABLE_IRQ
@@ -4075,7 +3782,7 @@ static int sm_fg_remove(struct i2c_client *client)
 
 static void sm_fg_shutdown(struct i2c_client *client)
 {
-	pr_info("sm fuel gauge driver shutdown!\n");
+	
 }
 
 static const struct of_device_id sm_fg_match_table[] = {
