@@ -3,7 +3,7 @@ menu "KernelSU"
 config KSU
 	  tristate "KernelSU function support"
       select KALLSYMS
-	  default y
+	  default n
 	  help
 		Enable kernel-level root privileges on Android System.
 		Choose "m" here to build KernelSU as LKM
