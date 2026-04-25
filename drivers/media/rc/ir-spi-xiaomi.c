@@ -38,13 +38,11 @@
 #include <uapi/linux/lirc.h>
 #include <asm/uaccess.h>
 
-#define IR_SPI_DRIVER_NAME		"ir-spi"
+#define IR_SPI_DRIVER_NAME		"ir-spi-xiaomi"
 
 #define IR_SPI_DEFAULT_FREQUENCY	1920000
 #define IR_SPI_BIT_PER_WORD		    32
 #define IR_SPI_DATA_BUFFER		    150000
-
-struct ir_spi_data *ir_spi_data_g;
 
 struct ir_spi_data {
 	u16 nusers;
@@ -59,6 +57,8 @@ struct ir_spi_data {
 	struct mutex mutex;
 	struct regulator *regulator;
 };
+
+struct ir_spi_data *ir_spi_data_g;
 
 static ssize_t ir_spi_chardev_write(struct file *file,
 					const char __user *buffer,
@@ -229,7 +229,9 @@ static struct miscdevice ir_spi_dev_drv = {
 	.mode = 0666,
 };
 
-static int ir_spi_probe(struct spi_device *spi)
+bool xiaomi_ir_probe = false;
+
+int xiaomi_ir_spi_probe(struct spi_device *spi)
 {
 	struct ir_spi_data *idata;
 	u8 *buffer = NULL;
@@ -252,10 +254,11 @@ static int ir_spi_probe(struct spi_device *spi)
 	idata->buffer = buffer;
 	idata->buffer_size = IR_SPI_DATA_BUFFER;
 	misc_register(&ir_spi_dev_drv);
+	xiaomi_ir_probe = true;
 	return 0;
 }
 
-static int ir_spi_remove(struct spi_device *spi)
+int xiaomi_ir_spi_remove(struct spi_device *spi)
 {
 	struct ir_spi_data *idata = spi_get_drvdata(spi);
 	if (idata->buffer != NULL) {
@@ -263,11 +266,12 @@ static int ir_spi_remove(struct spi_device *spi)
 		idata->buffer = NULL;
 	}
 	misc_deregister(&ir_spi_dev_drv);
+	xiaomi_ir_probe = false;
 
 	return 0;
 }
 
-static const struct of_device_id ir_spi_of_match[] = {
+/*static const struct of_device_id ir_spi_of_match[] = {
 	{ .compatible = "ir-spi" },
 	{},
 };
@@ -282,7 +286,7 @@ static struct spi_driver ir_spi_driver = {
 	},
 };
 
-module_spi_driver(ir_spi_driver);
+module_spi_driver(ir_spi_driver);*/
 
 MODULE_AUTHOR("Andi Shyti <andi.shyti@samsung.com>");
 MODULE_DESCRIPTION("SPI IR LED");

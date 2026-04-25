@@ -109,11 +109,18 @@ static int ir_spi_set_duty_cycle(struct rc_dev *dev, u32 duty_cycle)
 	return 0;
 }
 
+extern bool xiaomi_ir_probe;
+extern int xiaomi_ir_spi_probe(struct spi_device *spi);
+extern int xiaomi_ir_spi_remove(struct spi_device *spi);
+
 static int ir_spi_probe(struct spi_device *spi)
 {
 	int ret;
 	u8 dc;
 	struct ir_spi_data *idata;
+
+	if (of_device_is_compatible(spi->dev.of_node, "ir-spi"))
+		return xiaomi_ir_spi_probe(spi);
 
 	idata = devm_kzalloc(&spi->dev, sizeof(*idata), GFP_KERNEL);
 	if (!idata)
@@ -154,10 +161,11 @@ static int ir_spi_probe(struct spi_device *spi)
 
 static int ir_spi_remove(struct spi_device *spi)
 {
-	return 0;
+	return xiaomi_ir_probe ? xiaomi_ir_spi_remove(spi) : 0;
 }
 
 static const struct of_device_id ir_spi_of_match[] = {
+	{ .compatible = "ir-spi" }, // Xiaomi version
 	{ .compatible = "ir-spi-led" },
 	{},
 };
