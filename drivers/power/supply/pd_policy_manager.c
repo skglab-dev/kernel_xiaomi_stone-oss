@@ -864,7 +864,7 @@ static int battery_sw_jeita(struct usbpd_pm *pdpm)
     		break;
         }
 
-        if (pdpm->batt_auth != 1)
+        if (!fast_mode && pdpm->batt_auth != 1)
             jeita_curr = 2000;
 
         if(pdpm->therm_curr < 2000)
