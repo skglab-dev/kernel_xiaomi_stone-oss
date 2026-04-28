@@ -1,5 +1,6 @@
 #include "../qcom/blair-qrd-nopmi.dts"
 #include "stone-audio.dts"
+#include "stone-camera.dts"
 
 / {
 	model = "Qualcomm Technologies, Inc. STONE QRD NOPMI";
