@@ -9,6 +9,7 @@
 #include "stone-pinctrl.dts"
 #include "stone-pmic.dts"
 #include "stone-regulator.dts"
+#include "stone-thermal.dts"
 
 / {
 	model = "Qualcomm Technologies, Inc. STONE QRD NOPMI";
