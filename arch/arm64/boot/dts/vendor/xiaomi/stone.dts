@@ -16,3 +16,9 @@
 / {
 	model = "Qualcomm Technologies, Inc. STONE QRD NOPMI";
 };
+
+&qcom {
+	/delete-property/ mem-type;
+	pmsg-size = <0x100000>;
+	console-size = <0x100000>;
+};
