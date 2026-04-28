@@ -11,6 +11,7 @@
 #include "stone-regulator.dts"
 #include "stone-thermal.dts"
 #include "stone-touchscreen.dts"
+#include "stone-vibrator.dts"
 
 / {
 	model = "Qualcomm Technologies, Inc. STONE QRD NOPMI";
