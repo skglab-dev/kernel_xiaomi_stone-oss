@@ -3,6 +3,7 @@
 #include "stone-camera.dts"
 #include "stone-consumerir.dts"
 #include "stone-display.dts"
+#include "stone-fingerprint.dts"
 
 / {
 	model = "Qualcomm Technologies, Inc. STONE QRD NOPMI";
