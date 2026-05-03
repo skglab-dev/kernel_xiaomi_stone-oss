@@ -525,12 +525,12 @@ static void tcpc_event_init_work(struct work_struct *work)
 	tcpci_unlock_typec(tcpc);
 
 #ifdef CONFIG_USB_PD_REV30
-	INIT_DELAYED_WORK(&tcpc->bat_update_work, bat_update_work_func);
 	tcpc->bat_psy = power_supply_get_by_name("battery");
 	if (!tcpc->bat_psy) {
 		TCPC_ERR("%s get battery psy fail\n", __func__);
 		return;
 	}
+	INIT_DELAYED_WORK(&tcpc->bat_update_work, bat_update_work_func);
 	tcpc->charging_status = BSDO_BAT_INFO_IDLE;
 	tcpc->bat_soc = 0;
 	tcpc->bat_nb.notifier_call = bat_nb_call_func;
