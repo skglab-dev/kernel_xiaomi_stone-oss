@@ -194,6 +194,9 @@ static inline void start_usb_host(struct rt_pd_manager_data *rpmd)
 {
 	union extcon_property_value val = {.intval = 0};
 
+	if(!rpmd->tcpc)
+		return;
+
 	val.intval = tcpm_inquire_cc_polarity(rpmd->tcpc);
 	extcon_set_property(rpmd->extcon, EXTCON_USB_HOST,
 			    EXTCON_PROP_USB_TYPEC_POLARITY, val);
@@ -216,6 +219,9 @@ static inline void start_usb_peripheral(struct rt_pd_manager_data *rpmd)
 	int rp = 0;
 #endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)) */
 	union extcon_property_value val = {.intval = 0};
+
+	if(!rpmd->tcpc)
+		return;
 
 	val.intval = tcpm_inquire_cc_polarity(rpmd->tcpc);
 	extcon_set_property(rpmd->extcon, EXTCON_USB,
@@ -666,6 +672,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 						TCP_VBUS_CTRL_PD_STANDBY);
 		case PD_CONNECT_PE_READY_SNK:
 		case PD_CONNECT_PE_READY_SNK_PD30:
+			if(!rpmd->tcpc)
+				break;
 			ret = tcpm_inquire_dpm_flags(rpmd->tcpc);
 			val.intval = ret & DPM_FLAGS_PARTNER_USB_SUSPEND ?
 				     1 : 0;
@@ -675,6 +683,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			typec_set_pwr_opmode(rpmd->typec_port,
 					     TYPEC_PWR_MODE_PD);
 			if (!rpmd->partner)
+				break;
+			if(!rpmd->tcpc)
 				break;
 			ret = tcpm_inquire_pd_partner_inform(rpmd->tcpc,
 							     partner_vdos);
@@ -716,6 +726,9 @@ static int tcpc_typec_try_role(const struct typec_capability *cap, int role)
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) */
 	uint8_t typec_role = TYPEC_ROLE_UNKNOWN;
 
+	if(!rpmd->tcpc)
+		return 0;
+
 	dev_err(rpmd->dev, "%s role = %d\n", __func__, role);
 
 	switch (role) {
@@ -747,8 +760,13 @@ static int tcpc_typec_dr_set(const struct typec_capability *cap,
 		container_of(cap, struct rt_pd_manager_data, typec_caps);
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) */
 	int ret = 0;
-	uint8_t data_role = tcpm_inquire_pd_data_role(rpmd->tcpc);
+	uint8_t data_role = 0;
 	bool do_swap = false;
+
+	if(!rpmd->tcpc)
+		return 0;
+
+	data_role = tcpm_inquire_pd_data_role(rpmd->tcpc);
 
 	dev_err(rpmd->dev, "%s role = %d\n", __func__, role);
 
@@ -791,8 +809,13 @@ static int tcpc_typec_pr_set(const struct typec_capability *cap,
 		container_of(cap, struct rt_pd_manager_data, typec_caps);
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) */
 	int ret = 0;
-	uint8_t power_role = tcpm_inquire_pd_power_role(rpmd->tcpc);
+	uint8_t power_role = 0;
 	bool do_swap = false;
+
+	if(!rpmd->tcpc)
+		return 0;
+
+	power_role = tcpm_inquire_pd_power_role(rpmd->tcpc);
 
 	dev_err(rpmd->dev, "%s role = %d\n", __func__, role);
 
@@ -837,8 +860,13 @@ static int tcpc_typec_vconn_set(const struct typec_capability *cap,
 		container_of(cap, struct rt_pd_manager_data, typec_caps);
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) */
 	int ret = 0;
-	uint8_t vconn_role = tcpm_inquire_pd_vconn_role(rpmd->tcpc);
+	uint8_t vconn_role = 0;
 	bool do_swap = false;
+
+	if(!rpmd->tcpc)
+		return 0;
+
+	vconn_role = tcpm_inquire_pd_vconn_role(rpmd->tcpc);
 
 	dev_err(rpmd->dev, "%s role = %d\n", __func__, role);
 
@@ -882,8 +910,13 @@ static int tcpc_typec_port_type_set(const struct typec_capability *cap,
 	struct rt_pd_manager_data *rpmd =
 		container_of(cap, struct rt_pd_manager_data, typec_caps);
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)) */
-	bool as_sink = tcpc_typec_is_act_as_sink_role(rpmd->tcpc);
+	bool as_sink = false;
 	uint8_t typec_role = TYPEC_ROLE_UNKNOWN;
+
+	if(!rpmd->tcpc)
+		return 0;
+
+	as_sink = tcpc_typec_is_act_as_sink_role(rpmd->tcpc);
 
 	dev_err(rpmd->dev, "%s type = %d, as_sink = %d\n",
 			    __func__, type, as_sink);
@@ -930,18 +963,22 @@ static int typec_init(struct rt_pd_manager_data *rpmd)
 	rpmd->typec_caps.data = TYPEC_PORT_DRD;
 	rpmd->typec_caps.revision = 0x0120;
 	rpmd->typec_caps.pd_revision = 0x0300;
-	switch (rpmd->tcpc->desc.role_def) {
-	case TYPEC_ROLE_SRC:
-	case TYPEC_ROLE_TRY_SRC:
+	if(rpmd->tcpc) {
+		switch (rpmd->tcpc->desc.role_def) {
+		case TYPEC_ROLE_SRC:
+		case TYPEC_ROLE_TRY_SRC:
+			rpmd->typec_caps.prefer_role = TYPEC_SOURCE;
+			break;
+		case TYPEC_ROLE_SNK:
+		case TYPEC_ROLE_TRY_SNK:
+			rpmd->typec_caps.prefer_role = TYPEC_SINK;
+			break;
+		default:
+			rpmd->typec_caps.prefer_role = TYPEC_NO_PREFERRED_ROLE;
+			break;
+		}
+	} else {
 		rpmd->typec_caps.prefer_role = TYPEC_SOURCE;
-		break;
-	case TYPEC_ROLE_SNK:
-	case TYPEC_ROLE_TRY_SNK:
-		rpmd->typec_caps.prefer_role = TYPEC_SINK;
-		break;
-	default:
-		rpmd->typec_caps.prefer_role = TYPEC_NO_PREFERRED_ROLE;
-		break;
 	}
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 	rpmd->typec_caps.driver_data = rpmd;
