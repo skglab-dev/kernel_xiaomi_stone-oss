@@ -13,7 +13,6 @@ PCBA_CONFIG get_huaqin_pcba_config(void)
 
 	pcba_config = (PCBA_CONFIG *)qcom_smem_get(QCOM_SMEM_HOST_ANY, SMEM_ID_VENDOR1, &size);
 	if (pcba_config) {
-		pr_err("pcba config = %d 0x%x.\n", *(pcba_config), *(pcba_config));
 		if (*(pcba_config) > PCBA_UNKNOW && *(pcba_config) < PCBA_END) {
 			huaqin_pcba_config = *pcba_config;
 		} else {
