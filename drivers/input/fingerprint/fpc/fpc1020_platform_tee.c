@@ -613,8 +613,6 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
 
-	pr_info("%s %d",__func__,fpc1020->prepared);
-
 	return IRQ_HANDLED;
 }
 
