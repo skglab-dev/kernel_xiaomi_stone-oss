@@ -474,7 +474,7 @@ static void usbpd_pm_update_sw_status(struct usbpd_pm *pdpm)
 /***************PD API****************/
 static inline int check_typec_attached_snk(struct tcpc_device *tcpc)
 {
-    if (tcpm_inquire_typec_attach_state(tcpc) != TYPEC_ATTACHED_SNK)
+    if (tcpc && tcpm_inquire_typec_attach_state(tcpc) != TYPEC_ATTACHED_SNK)
         return -EINVAL;
     return 0;
 }
@@ -483,6 +483,9 @@ static int usbpd_pps_enable_charging(struct usbpd_pm *pdpm, bool en,
                 u32 mV, u32 mA)
 {
     int ret, cnt = 0;
+
+    if(!pdpm->tcpc)
+        return -EINVAL;
 
     if (check_typec_attached_snk(pdpm->tcpc) < 0)
         return -EINVAL;
@@ -507,6 +510,9 @@ static bool usbpd_get_pps_status(struct usbpd_pm *pdpm)
     int ret, apdo_idx = -1;
     struct tcpm_power_cap_val apdo_cap = {0};
     u8 cap_idx;
+
+    if(!pdpm->tcpc)
+        return false;
 
     if (check_typec_attached_snk(pdpm->tcpc) < 0)
         return false;
@@ -575,6 +581,9 @@ static int usbpd_select_pdo(struct usbpd_pm *pdpm, u32 mV, u32 mA)
 {
     int ret, cnt = 0;
 
+    if(!pdpm->tcpc)
+        return -EINVAL;
+
     if (check_typec_attached_snk(pdpm->tcpc) < 0)
         return -EINVAL;
 
@@ -613,7 +622,8 @@ static int pca_pps_tcp_notifier_call(struct notifier_block *nb,
             pdpm->psy_change_running = 0;
             break;
         case PD_CONNECT_PE_READY_SNK_PD30:
-            tcpm_dpm_pd_request(pdpm->tcpc, 5000, 3000, NULL);
+            if(pdpm->tcpc)
+                tcpm_dpm_pd_request(pdpm->tcpc, 5000, 3000, NULL);
             break;
         case PD_CONNECT_PE_READY_SNK_APDO:
             if (pdpm->hrst_cnt < 5) {
@@ -1207,6 +1217,9 @@ static void usb_psy_change_work(struct work_struct *work)
     struct usbpd_pm *pdpm = container_of(work, struct usbpd_pm,
                     usb_psy_change_work);
     union power_supply_propval val = {0,};
+
+    if(!pdpm->tcpc)
+        return;
 
 	#if 0
     if (check_typec_attached_snk(pdpm->tcpc) < 0) {
