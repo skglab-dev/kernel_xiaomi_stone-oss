@@ -263,7 +263,6 @@ static int __init virtualsar_init(void)
 	pr_debug("SAR  %s - Start driver initialization...\n", __func__);
 
 	ret = i2c_add_driver(&virtualsar_driver);
-	printk("ret : %d\n", ret);
 	return ret;
 }
 
