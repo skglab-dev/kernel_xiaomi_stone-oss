@@ -793,8 +793,6 @@ static int rt_regmap_cache_init(struct rt_regmap_device *rd)
 	int ret = 0, i = 0, j = 0, count = 0, bytes_num = 0;
 	const rt_register_map_t *rm = rd->props.rm;
 
-	pr_info("%s\n", __func__);
-
 	down(&rd->semaphore);
 	rd->cache_data = devm_kzalloc(&rd->dev, rd->props.register_num *
 			sizeof(*rd->cache_data), GFP_KERNEL);
@@ -845,7 +843,6 @@ static int rt_regmap_cache_init(struct rt_regmap_device *rd)
 		}
 	}
 
-	pr_info("%s successfully\n", __func__);
 out:
 	up(&rd->semaphore);
 	return ret;
@@ -1470,7 +1467,7 @@ static int rt_regmap_check(struct rt_regmap_device *rd)
 	for (i = 0; i < rd->props.register_num - 1; i++) {
 		/* check register sequence */
 		if (rm[i]->addr >= rm[i + 1]->addr) {
-			pr_info("%s sequence error @ 0x%02x\n",
+			pr_err("%s sequence error @ 0x%02x\n",
 				__func__, rm[i]->addr);
 		}
 	}
@@ -1504,7 +1501,6 @@ struct rt_regmap_device *rt_regmap_device_register_ex
 		return NULL;
 	}
 
-	pr_info("%s name = %s\n", __func__, props->name);
 	rd = kzalloc(sizeof(*rd), GFP_KERNEL);
 	if (!rd)
 		return NULL;
@@ -1606,7 +1602,6 @@ EXPORT_SYMBOL(rt_regmap_device_unregister);
 
 int regmap_plat_init(void)
 {
-	pr_info("Init Richtek RegMap %s\n", RT_REGMAP_VERSION);
 #ifdef CONFIG_DEBUG_FS
 	rt_regmap_dir = debugfs_create_dir("rt-regmap", NULL);
 	if (!rt_regmap_dir) {

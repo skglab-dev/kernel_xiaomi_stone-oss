@@ -1010,7 +1010,6 @@ static int rt1711_is_low_power_mode(struct tcpc_device *tcpc)
 		return rv;
 
 	if (chip->chip_id == HUSB311_DID) {
-		pr_info("%s - read HUSB311_REG_BMC_CTRL=0x%x\n", __func__, rv);
 		return ((rv & RT1711H_REG_BMCIO_OSC_EN) == 0);
 	}
 
@@ -1042,8 +1041,6 @@ static int rt1711_set_low_power_mode(
 #endif
 		if (chip->chip_id == HUSB311_DID) {
 			data &= ~RT1711H_REG_BMCIO_OSC_EN;
-			pr_info("%s - write HUSB311_REG_BMC_CTRL=0x%x\n",
-				__func__, data);
 		}
 
 	} else {
@@ -1052,8 +1049,6 @@ static int rt1711_set_low_power_mode(
 
 		if (chip->chip_id == HUSB311_DID) {
 			data |= RT1711H_REG_BMCIO_OSC_EN;
-			pr_info("%s - write HUSB311_REG_BMC_CTRL=0x%x\n",
-				__func__, data);
 		}
 	}
 
@@ -1096,7 +1091,6 @@ static int rt1711_tcpc_deinit(struct tcpc_device *tcpc)
 		rt1711_i2c_write8(tcpc, TCPC_V10_REG_POWER_STATUS_MASK, 0x0); //0x14
 		rt1711_i2c_write8(tcpc, RT1711H_REG_RT_MASK, 0x0); //0x99
 		rt1711_i2c_write8(tcpc, RT1711H_REG_BMC_CTRL, 0x0); //0x90
-		pr_info("%s - HUSB311 deinit\n",__func__);
 	} else {
 		rt1711_i2c_write8(tcpc,
 			RT1711H_REG_I2CRST_CTRL,
@@ -1301,8 +1295,6 @@ static int rt_parse_dt(struct rt1711_chip *chip, struct device *dev)
 	struct device_node *np = dev->of_node;
 	int ret = 0;
 
-	pr_info("%s\n", __func__);
-
 #if (!defined(CONFIG_MTK_GPIO) || defined(CONFIG_MTK_GPIOLIB_STAND))
 	ret = of_get_named_gpio(np, "rt1711pd,intr_gpio", 0);
 	if (ret < 0) {
@@ -1328,41 +1320,7 @@ static int rt_parse_dt(struct rt1711_chip *chip, struct device *dev)
 #if TCPC_ENABLE_ANYMSG
 static void check_printk_performance(void)
 {
-	int i;
-	u64 t1, t2;
-	u32 nsrem;
-
-#ifdef CONFIG_PD_DBG_INFO
-	for (i = 0; i < 10; i++) {
-		t1 = local_clock();
-		pd_dbg_info("%d\n", i);
-		t2 = local_clock();
-		t2 -= t1;
-		nsrem = do_div(t2, 1000000000);
-		pd_dbg_info("pd_dbg_info : t2-t1 = %lu\n",
-				(unsigned long)nsrem / 1000);
-	}
-	for (i = 0; i < 10; i++) {
-		t1 = local_clock();
-		pr_info("%d\n", i);
-		t2 = local_clock();
-		t2 -= t1;
-		nsrem = do_div(t2, 1000000000);
-		pr_info("pr_info : t2-t1 = %lu\n",
-				(unsigned long)nsrem / 1000);
-	}
-#else
-	for (i = 0; i < 10; i++) {
-		t1 = local_clock();
-		pr_info("%d\n", i);
-		t2 = local_clock();
-		t2 -= t1;
-		nsrem = do_div(t2, 1000000000);
-		pr_info("t2-t1 = %lu\n",
-				(unsigned long)nsrem /  1000);
-		PD_BUG_ON(nsrem > 100*1000);
-	}
-#endif /* CONFIG_PD_DBG_INFO */
+	
 }
 #endif /* TCPC_ENABLE_ANYMSG */
 
@@ -1479,7 +1437,7 @@ static inline int rt1711h_check_revision(struct i2c_client *client)
 	}
 
 	if (vid != RICHTEK_1711_VID && vid != HUSB_311_VID) {
-		pr_info("%s failed, VID=0x%04x\n", __func__, vid);
+		pr_err("%s failed, VID=0x%04x\n", __func__, vid);
 		return -ENODEV;
 	}
 
@@ -1490,7 +1448,7 @@ static inline int rt1711h_check_revision(struct i2c_client *client)
 	}
 
 	if (pid != RICHTEK_1711_PID && pid != HUSB_311_PID) {
-		pr_info("%s failed, PID=0x%04x\n", __func__, pid);
+		pr_err("%s failed, PID=0x%04x\n", __func__, pid);
 		return -ENODEV;
 	}
 
@@ -1521,7 +1479,7 @@ static int rt1711_i2c_probe(struct i2c_client *client,
 			I2C_FUNC_SMBUS_I2C_BLOCK | I2C_FUNC_SMBUS_BYTE_DATA))
 		pr_info("I2C functionality : OK...\n");
 	else
-		pr_info("I2C functionality check : failuare...\n");
+		pr_err("I2C functionality check : failuare...\n");
 
 	chip_id = rt1711h_check_revision(client);
 	if (chip_id < 0)
@@ -1547,7 +1505,6 @@ static int rt1711_i2c_probe(struct i2c_client *client,
 	chip->client = client;
 	i2c_set_clientdata(client, chip);
 	chip->chip_id = chip_id;
-	pr_info("rt1711h_chipID = 0x%0x\n", chip_id);
 	mutex_init(&chip->irq_lock);
 	chip->is_suspended = false;
 	chip->irq_while_suspended = false;

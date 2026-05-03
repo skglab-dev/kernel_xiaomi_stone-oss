@@ -146,7 +146,6 @@ static struct task_struct *print_out_task;
 
 int pd_dbg_info_init(void)
 {
-	pr_info("%s\n", __func__);
 	mutex_init(&buff_lock);
 	init_waitqueue_head(&print_out_wait_que);
 	atomic_set(&pending_print_out, 0);

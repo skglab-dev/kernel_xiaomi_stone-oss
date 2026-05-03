@@ -103,19 +103,15 @@ static int tcpc_dual_role_set_prop_pr(
 	}
 
 	if (val == tcpc->dual_role_pr) {
-		pr_info("%s wrong role (%d->%d)\n",
+		pr_err("%s wrong role (%d->%d)\n",
 			__func__, tcpc->dual_role_pr, val);
 		return 0;
 	}
 
 	ret = tcpm_dpm_pd_power_swap(tcpc, role, NULL);
-	pr_info("%s power role swap (%d->%d): %d\n",
-		__func__, tcpc->dual_role_pr, val, ret);
 
 	if (ret == TCPM_ERROR_NO_PD_CONNECTED) {
 		ret = tcpm_typec_role_swap(tcpc);
-		pr_info("%s typec role swap (%d->%d): %d\n",
-			__func__, tcpc->dual_role_pr, val, ret);
 	}
 
 	return ret;
@@ -138,15 +134,10 @@ static int tcpc_dual_role_set_prop_dr(
 		return 0;
 	}
 
-	if (val == tcpc->dual_role_dr) {
-		pr_info("%s wrong role (%d->%d)\n",
-			__func__, tcpc->dual_role_dr, val);
+	if (val == tcpc->dual_role_dr)
 		return 0;
-	}
 
 	ret = tcpm_dpm_pd_data_swap(tcpc, role, NULL);
-	pr_info("%s data role swap (%d->%d): %d\n",
-		__func__, tcpc->dual_role_dr, val, ret);
 
 	return ret;
 }
@@ -168,15 +159,10 @@ static int tcpc_dual_role_set_prop_vconn(
 		return 0;
 	}
 
-	if (val == tcpc->dual_role_vconn) {
-		pr_info("%s wrong role (%d->%d)\n",
-			__func__, tcpc->dual_role_vconn, val);
+	if (val == tcpc->dual_role_vconn)
 		return 0;
-	}
 
 	ret = tcpm_dpm_pd_vconn_swap(tcpc, role, NULL);
-	pr_info("%s vconn swap (%d->%d): %d\n",
-		__func__, tcpc->dual_role_vconn, val, ret);
 
 	return ret;
 }
@@ -188,15 +174,10 @@ static int tcpc_dual_role_set_prop_mode(
 {
 	int ret;
 
-	if (val == tcpc->dual_role_mode) {
-		pr_info("%s wrong role (%d->%d)\n",
-			__func__, tcpc->dual_role_mode, val);
+	if (val == tcpc->dual_role_mode)
 		return 0;
-	}
 
 	ret = tcpm_typec_role_swap(tcpc);
-	pr_info("%s typec role swap (%d->%d): %d\n",
-		__func__, tcpc->dual_role_mode, val, ret);
 
 	return ret;
 }

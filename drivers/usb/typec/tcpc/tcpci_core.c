@@ -326,7 +326,6 @@ static void tcpc_device_release(struct device *dev)
 {
 	struct tcpc_device *tcpc = to_tcpc_device(dev);
 
-	pr_info("%s : %s device release\n", __func__, dev_name(dev));
 	PD_BUG_ON(tcpc == NULL);
 	/* Un-init pe thread */
 #ifdef CONFIG_USB_POWER_DELIVERY
@@ -346,7 +345,6 @@ struct tcpc_device *tcpc_device_register(struct device *parent,
 	struct tcpc_device *tcpc;
 	int ret = 0, i = 0;
 
-	pr_info("%s register tcpc device (%s)\n", __func__, tcpc_desc->name);
 	tcpc = devm_kzalloc(parent, sizeof(*tcpc), GFP_KERNEL);
 	if (!tcpc) {
 		pr_err("%s : allocate tcpc memory failed\n", __func__);
@@ -518,8 +516,6 @@ static void tcpc_event_init_work(struct work_struct *work)
 	}
 #endif /* CONFIG_USB_PD_WAIT_BC12 */
 	tcpc->pd_inited_flag = 1;
-	pr_info("%s typec attach new = %d\n",
-			__func__, tcpc->typec_attach_new);
 	if (tcpc->typec_attach_new)
 		pd_put_cc_attached_event(tcpc, tcpc->typec_attach_new);
 	tcpci_unlock_typec(tcpc);
@@ -781,7 +777,7 @@ static int __init tcpc_class_init(void)
 
 	tcpc_class = class_create(THIS_MODULE, "tcpc");
 	if (IS_ERR(tcpc_class)) {
-		pr_info("Unable to create tcpc class; errno = %ld\n",
+		pr_err("Unable to create tcpc class; errno = %ld\n",
 		       PTR_ERR(tcpc_class));
 		return PTR_ERR(tcpc_class);
 	}
