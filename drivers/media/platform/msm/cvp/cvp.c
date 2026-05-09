@@ -144,7 +144,7 @@ static int msm_cvp_initialize_core(struct platform_device *pdev,
 		init_completion(&core->completions[i]);
 	}
 
-	INIT_DELAYED_WORK(&core->fw_unload_work, msm_cvp_fw_unload_handler);
+	INIT_DEFERRABLE_WORK(&core->fw_unload_work, msm_cvp_fw_unload_handler);
 	INIT_WORK(&core->ssr_work, msm_cvp_ssr_handler);
 	init_cycle_info(&core->dyn_clk);
 

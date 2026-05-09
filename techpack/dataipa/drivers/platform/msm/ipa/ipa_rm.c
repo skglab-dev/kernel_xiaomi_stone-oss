@@ -293,7 +293,7 @@ int ipa_rm_request_resource_with_timer(enum ipa_rm_resource_name resource_name)
 	release_work->resource_name = resource->name;
 	release_work->needed_bw = 0;
 	release_work->dec_usage_count = false;
-	INIT_DELAYED_WORK(&release_work->work, delayed_release_work_func);
+	INIT_DEFERRABLE_WORK(&release_work->work, delayed_release_work_func);
 	queue_delayed_work(system_power_efficient_wq, &release_work->work,
 			msecs_to_jiffies(IPA_RM_RELEASE_DELAY_IN_MSEC));
 	result = 0;

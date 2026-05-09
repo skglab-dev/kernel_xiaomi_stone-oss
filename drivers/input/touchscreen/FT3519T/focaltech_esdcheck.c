@@ -424,7 +424,7 @@ int fts_esdcheck_init(struct fts_ts_data *ts_data)
 	FTS_FUNC_ENTER();
 
 	if (ts_data->ts_workqueue) {
-		INIT_DELAYED_WORK(&ts_data->esdcheck_work, esdcheck_func);
+		INIT_DEFERRABLE_WORK(&ts_data->esdcheck_work, esdcheck_func);
 	} else {
 		FTS_ERROR("fts workqueue is NULL, can't run esd check function");
 		return -EINVAL;

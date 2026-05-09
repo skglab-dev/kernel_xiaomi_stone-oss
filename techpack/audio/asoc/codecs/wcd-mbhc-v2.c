@@ -1906,9 +1906,10 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 			return ret;
 		}
 
-		INIT_DELAYED_WORK(&mbhc->mbhc_firmware_dwork,
+		INIT_DEFERRABLE_WORK(&mbhc->mbhc_firmware_dwork,
 				  wcd_mbhc_fw_read);
 		INIT_DELAYED_WORK(&mbhc->mbhc_btn_dwork, wcd_btn_lpress_fn);
+
 	}
 	init_completion(&mbhc->btn_press_compl);
 

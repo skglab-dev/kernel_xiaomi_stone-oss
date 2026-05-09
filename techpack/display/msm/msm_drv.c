@@ -915,7 +915,7 @@ static void msm_idle_init(struct drm_device *ddev)
 	idle->encoder_mask = IDLE_ENCODER_MASK_DEFAULT;
 	idle->timeout_ms = IDLE_TIMEOUT_MS_DEFAULT;
 
-	INIT_DELAYED_WORK(&idle->work, msm_idle_work);
+	INIT_DEFERRABLE_WORK(&idle->work, msm_idle_work);
 	spin_lock_init(&idle->lock);
 }
 

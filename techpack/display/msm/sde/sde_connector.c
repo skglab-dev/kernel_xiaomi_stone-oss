@@ -3198,7 +3198,7 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 	SDE_DEBUG("connector %d attach encoder %d\n",
 			c_conn->base.base.id, encoder->base.id);
 
-	INIT_DELAYED_WORK(&c_conn->status_work,
+	INIT_DEFERRABLE_WORK(&c_conn->status_work,
 			sde_connector_check_status_work);
 
 	return &c_conn->base;

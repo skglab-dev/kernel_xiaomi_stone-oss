@@ -86,9 +86,8 @@ static void ipa3_wake_tx_queue(struct work_struct *work);
 static DECLARE_WORK(ipa3_tx_wakequeue_work, ipa3_wake_tx_queue);
 
 static void tethering_stats_poll_queue(struct work_struct *work);
-static DECLARE_DELAYED_WORK(ipa_tether_stats_poll_wakequeue_work,
-			    tethering_stats_poll_queue);
-
+static DECLARE_DEFERRABLE_WORK(ipa_tether_stats_poll_wakequeue_work,
+			 tethering_stats_poll_queue);
 static int rmnet_ipa_send_coalesce_notification(uint8_t qmap_id, bool enable,
 					bool tcp, bool udp);
 
