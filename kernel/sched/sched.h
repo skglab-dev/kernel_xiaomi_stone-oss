@@ -2816,9 +2816,21 @@ enum schedutil_type {
 
 #if defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL) || defined(CONFIG_CPU_FREQ_GOV_SCHEDHORIZON)
 
+#if defined(CONFIG_CPU_FREQ_GOV_SCHEDHORIZON)
+extern unsigned long schedhorizon_cpu_util(int cpu, unsigned long util_cfs,
+				 unsigned long max, enum schedutil_type type,
+				 struct task_struct *p);
+static inline unsigned long schedutil_cpu_util(int cpu, unsigned long util_cfs,
+				 unsigned long max, enum schedutil_type type,
+				 struct task_struct *p)
+{
+	return schedhorizon_cpu_util(cpu, util_cfs, max, type, p);
+}
+#else
 unsigned long schedutil_cpu_util(int cpu, unsigned long util_cfs,
 				 unsigned long max, enum schedutil_type type,
 				 struct task_struct *p);
+#endif
 
 static inline unsigned long cpu_bw_dl(struct rq *rq)
 {
