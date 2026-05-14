@@ -549,6 +549,5 @@ source "drivers/misc/cxl/Kconfig"
 source "drivers/misc/ocxl/Kconfig"
 source "drivers/misc/cardreader/Kconfig"
 source "drivers/misc/habanalabs/Kconfig"
-source "drivers/misc/xiaomi_fs/Kconfig"
 source "drivers/misc/hqsysfs/Kconfig"
 endmenu
