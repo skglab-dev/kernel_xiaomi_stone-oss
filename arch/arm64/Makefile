@@ -134,6 +134,8 @@ endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 KBUILD_TARGET   += dtbo.img
+KBUILD_DTBO_IMG := dtbo.img
+KBUILD_DTB_IMG := dtb.img
 endif
 
 # Default target when executing plain make
@@ -155,6 +157,11 @@ ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 dtbo.img: dtbs
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 endif
+
+$(KBUILD_DTB_IMG): dtbs
+	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
+
+all: $(KBUILD_DTB_IMG)
 
 PHONY += vdso_install
 vdso_install:
