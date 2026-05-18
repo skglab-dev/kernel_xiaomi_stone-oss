@@ -31,6 +31,7 @@
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
 		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode_vfp";
 		qcom,dsi-supported-dfps-list = <120 90 60>;
+		qcom,mdss-dsi-qsync-min-refresh-rate = <60>;
 		mi,mdss-dsi-doze-hbm-brightness-value = <272>;
 		mi,mdss-dsi-doze-lbm-brightness-value = <22>;
 		qcom,mdss-dsi-oled-panel-video-mode;
