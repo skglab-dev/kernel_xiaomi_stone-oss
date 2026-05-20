@@ -893,9 +893,12 @@ static bool adios_bio_merge(struct request_queue *q, struct bio *bio,
 static bool merge_or_insert_to_dl_tree(struct adios_data *ad,
 		struct request *rq, struct request_queue *q) {
 	bool dl_idx;
+	LIST_HEAD(free);
 
-	if (blk_mq_sched_try_insert_merge(q, rq))
+	if (blk_mq_sched_try_insert_merge(q, rq, &free)) {
+		blk_mq_free_requests(&free);
 		return true;
+	}
 
 	dl_idx = adios_optype_not_read(rq);
 	add_to_dl_tree(ad, dl_idx, rq);
