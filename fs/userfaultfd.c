@@ -30,7 +30,7 @@
 #include <linux/hugetlb.h>
 #include <linux/pgsize_migration.h>
 
-int sysctl_unprivileged_userfaultfd = 1;
+int sysctl_unprivileged_userfaultfd __read_mostly;
 
 static struct kmem_cache *userfaultfd_ctx_cachep __read_mostly;
 
