@@ -3,6 +3,13 @@
 #include <linux/sched.h>
 #include <linux/osq_lock.h>
 
+#ifndef data_race
+#define data_race(expr)							\
+	({								\
+		expr;							\
+	})
+#endif
+
 /*
  * An MCS like lock especially tailored for optimistic spinning for sleeping
  * lock implementations (mutex, rwsem, etc).
