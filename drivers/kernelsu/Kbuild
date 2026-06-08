@@ -154,7 +154,6 @@ ifdef CONFIG_KSU_TRACEPOINT_HOOK
 
 else ifdef CONFIG_KSU_MANUAL_HOOK
   $(info -- $(REPO_NAME): using Manual Hook)
-  include $(KSU_SRC)/tools/manual_hook_check.mk
 else ifdef CONFIG_KSU_SUSFS
   $(info -- $(REPO_NAME): using SuSFS Inline hook)
   include $(KSU_SRC)/tools/inline_hook_check.mk
