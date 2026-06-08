@@ -1575,6 +1575,12 @@ static int adreno_pm_suspend(struct device *dev)
 	status = ops->pm_suspend(adreno_dev);
 	mutex_unlock(&device->mutex);
 
+	if (status)
+		return status;
+
+	kthread_flush_worker(device->events_worker);
+	flush_workqueue(kgsl_driver.mem_workqueue);
+
 	return status;
 }
 
