@@ -356,19 +356,6 @@ static ssize_t power_ctrl_set(struct device *dev,
 }
 static DEVICE_ATTR(power_ctrl, S_IWUSR, NULL, power_ctrl_set);
 
-static ssize_t screen_get(struct device *device, struct device_attribute *attribute, char *buffer)
-{
-    int value;
-    struct fpc1020_data *fpc1020 = dev_get_drvdata(device);
-
-    mutex_lock(&fpc1020->lock);
-    value = fpc1020->fb_black ? 1 : 0;
-    mutex_unlock(&fpc1020->lock);
-
-    return scnprintf(buffer, PAGE_SIZE, "%i\n", value);
-}
-
-static DEVICE_ATTR(screen, S_IRUSR | S_IWUSR, screen_get, NULL);
 /**
  * Will setup GPIOs, and regulators to correctly initialize the touch sensor to
  * be ready for work.
@@ -692,7 +679,6 @@ static struct attribute *attributes[] = {
 	&dev_attr_clk_enable.attr,
 	&dev_attr_irq.attr,
 	&dev_attr_power_ctrl.attr,
-	&dev_attr_screen.attr,
 #ifdef CONFIG_FPC_COMPAT
 	&dev_attr_compatible_all.attr,
 #endif
