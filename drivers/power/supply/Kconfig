@@ -768,6 +768,12 @@ config HQ_NOTIFY
 	help
 	  Say Y/M here to support huaqin notify utils
 
+config XM_CHG_DFS
+	tristate "support xiaomi charge dfs features"
+	default m
+	help
+	  Say Y or M to support xiaomi charge dfs features.
+
 source "drivers/power/supply/qcom/Kconfig"
 source "drivers/power/supply/battery_secrete/Kconfig"
 
