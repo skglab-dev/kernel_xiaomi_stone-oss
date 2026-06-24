@@ -730,6 +730,12 @@ config CHARGER_WILCO
 	  information can be found in
 	  Documentation/ABI/testing/sysfs-class-power-wilco
 
+config HQ_NOTIFY
+	tristate "Support Huaqin Notify Driver"
+	default y
+	help
+	  Say Y/M here to support huaqin notify utils
+
 source "drivers/power/supply/qcom/Kconfig"
 source "drivers/power/supply/battery_secrete/Kconfig"
 
