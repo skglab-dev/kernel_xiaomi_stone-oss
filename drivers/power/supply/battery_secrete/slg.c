@@ -22,7 +22,7 @@
 #include <linux/random.h>
 
 #ifdef CONFIG_BUILD_QGKI
-#include "hqsys_pcba.h"
+#include <misc/hqsys_pcba.h>
 #include "w1_slg.h"
 #endif
 
