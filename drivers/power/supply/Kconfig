@@ -503,6 +503,12 @@ config CHARGER_MANAGER
           runtime and in suspend-to-RAM by waking up the system periodically
           with help of suspend_again support.
 
+config HQ_CHARGER_MANAGER
+	tristate "hq charger manager"
+	default n
+	help
+	 Say Y enable hq charger manager
+
 config CHARGER_LT3651
 	tristate "Analog Devices LT3651 charger"
 	depends on GPIOLIB
