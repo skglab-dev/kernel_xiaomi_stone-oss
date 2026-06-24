@@ -634,6 +634,14 @@ config CHARGER_LN8000
 	  It is mainly used as divider charger for
 	  direct charge
 
+config CHARGER_PD_MANAGER
+	tristate "PD policy manager"
+	default n
+	help
+	  Say Y here to enable support of pd manager
+	  It is mainly used as divider charger for
+	  direct charge
+
 config SM5602_FG
 	tristate "sm5602 fg"
 	default n
