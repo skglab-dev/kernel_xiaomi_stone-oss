@@ -17,7 +17,7 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/w1.h>
-#include "hqsys_pcba.h"
+#include <misc/hqsys_pcba.h>
 
 #ifdef CONFIG_BUILD_QGKI
 extern PCBA_CONFIG get_huaqin_pcba_config(void);
